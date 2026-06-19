@@ -1,0 +1,28 @@
+{
+  "name": "coaching-os-analytics-worker",
+  "version": "1.0.0",
+  "description": "CoachingOS Analytics Worker — NATS consumer that writes to ClickHouse",
+  "private": true,
+  "scripts": {
+    "prebuild": "rimraf dist",
+    "build": "tsc",
+    "start": "node dist/main.js",
+    "start:dev": "ts-node-dev --respawn src/main.ts",
+    "lint": "eslint 'src/**/*.ts' --fix"
+  },
+  "dependencies": {
+    "@clickhouse/client": "^0.2.10",
+    "nats": "^2.19.0",
+    "dotenv": "^16.3.1",
+    "prom-client": "^15.1.0",
+    "@opentelemetry/auto-instrumentations-node": "^0.40.0",
+    "@opentelemetry/exporter-trace-otlp-grpc": "^0.45.0",
+    "@opentelemetry/sdk-node": "^0.45.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "rimraf": "^5.0.5",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.3.3"
+  }
+}

@@ -1,0 +1,4 @@
+# Place SSL certificates here
+# - fullchain.pem (certificate + intermediate)
+# - privkey.pem (private key)
+# For development, use self-signed certs

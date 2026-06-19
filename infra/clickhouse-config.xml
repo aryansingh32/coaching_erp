@@ -1,0 +1,111 @@
+<!--
+  ╔══════════════════════════════════════════════════════════════════════════════╗
+  ║  CoachingOS — ClickHouse Configuration                                      ║
+  ║                                                                             ║
+  ║  Tiered Storage (v3 Issue 6):                                               ║
+  ║    HOT tier  — local SSD (/var/lib/clickhouse/)                             ║
+  ║              — data parts up to 1GB                                         ║
+  ║    COLD tier — MinIO S3-compatible object storage                           ║
+  ║              — data older than 1 year (defined in table TTL)                ║
+  ║                                                                             ║
+  ║  This file is mounted at:                                                   ║
+  ║    /etc/clickhouse-server/config.d/limits.xml                               ║
+  ║  and merges with ClickHouse's default configuration.                        ║
+  ║                                                                             ║
+  ║  Memory: Limited to 40% of available RAM to coexist with other services.    ║
+  ╚══════════════════════════════════════════════════════════════════════════════╝
+-->
+<clickhouse>
+
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- TIERED STORAGE CONFIGURATION                                      -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- Two-tier storage policy:                                          -->
+    <!--   1. "default" disk: local SSD for hot (recent) data              -->
+    <!--   2. "cold" disk: MinIO S3 for data older than 1 year             -->
+    <!--                                                                    -->
+    <!-- Tables using storage_policy = 'tiered' will automatically move    -->
+    <!-- data parts to cold storage based on their TTL rules.              -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <storage_configuration>
+        <disks>
+            <default />
+
+            <!-- Cold tier: MinIO S3-compatible object storage -->
+            <!-- Data moves here after 1 year (per table TTL rules) -->
+            <!-- Queries still work transparently — ClickHouse reads from S3 -->
+            <cold>
+                <type>s3</type>
+                <!-- MinIO endpoint within Docker network -->
+                <!-- IMPORTANT: Update these credentials to match your .env -->
+                <endpoint>http://minio:9000/clickhouse-cold/</endpoint>
+                <access_key_id>change_me_minio_access_key</access_key_id>
+                <secret_access_key>change_me_minio_secret_key</secret_access_key>
+                <!-- S3 request settings for MinIO compatibility -->
+                <use_environment_credentials>false</use_environment_credentials>
+            </cold>
+        </disks>
+
+        <policies>
+            <!-- "tiered" policy: used by analytics_events table -->
+            <tiered>
+                <volumes>
+                    <!-- Hot volume: recent data on local SSD -->
+                    <!-- Parts up to 1GB stay here before potentially moving to cold -->
+                    <hot>
+                        <disk>default</disk>
+                        <max_data_part_size_bytes>1073741824</max_data_part_size_bytes>
+                    </hot>
+                    <!-- Cold volume: older data on MinIO S3 -->
+                    <cold>
+                        <disk>cold</disk>
+                    </cold>
+                </volumes>
+                <!-- move_factor: fraction of free space on current volume that triggers move -->
+                <!-- 0.2 means: when hot volume is 80% full, start moving to cold -->
+                <move_factor>0.2</move_factor>
+            </tiered>
+        </policies>
+    </storage_configuration>
+
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- MEMORY LIMITS                                                     -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- Limit ClickHouse to 40% of available RAM.                         -->
+    <!-- This ensures other Docker services (ERPNext, Moodle, Gateway)     -->
+    <!-- have sufficient memory on the same host.                          -->
+    <max_server_memory_usage_to_ram_ratio>0.4</max_server_memory_usage_to_ram_ratio>
+
+    <!-- User profile query limits (v3 config compliance) -->
+    <profiles>
+        <default>
+            <!-- Per-query memory limit: 2GB max per single query -->
+            <max_memory_usage>2000000000</max_memory_usage>
+            <!-- Max execution time for a single query: 60 seconds -->
+            <max_execution_time>60</max_execution_time>
+            <!-- Max rows returned per query: 1 million -->
+            <max_result_rows>1000000</max_result_rows>
+        </default>
+    </profiles>
+
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- MERGE TREE SETTINGS                                               -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <merge_tree>
+        <!-- Allow dropping large partitions (needed for TTL cleanup) -->
+        <max_suspicious_broken_parts>50</max_suspicious_broken_parts>
+        <!-- Background merge thread count (adjust based on CPU cores) -->
+        <number_of_free_entries_in_pool_to_execute_mutation>5</number_of_free_entries_in_pool_to_execute_mutation>
+    </merge_tree>
+
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- LOGGING                                                           -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- Log slow queries for performance debugging -->
+    <query_log>
+        <database>system</database>
+        <table>query_log</table>
+        <flush_interval_milliseconds>7500</flush_interval_milliseconds>
+    </query_log>
+
+</clickhouse>

@@ -1,0 +1,858 @@
+# ╔══════════════════════════════════════════════════════════════════════════════╗
+# ║  CoachingOS — Docker Compose (Production)                                   ║
+# ║  Multi-tenant coaching institute ERP platform                               ║
+# ║                                                                             ║
+# ║  Architecture: v2 + v3 combined                                             ║
+# ║  - ERPNext + Education = master identity                                    ║
+# ║  - NATS JetStream = event bus for async worker pattern                      ║
+# ║  - PLG stack (Prometheus + Loki + Grafana) = observability                  ║
+# ║  - PgBouncer = connection pooling for PostgreSQL                            ║
+# ║  - Metabase = embedded BI (no Superset)                                     ║
+# ║                                                                             ║
+# ║  Usage:                                                                     ║
+# ║    cp .env.example .env   # fill in secrets                                 ║
+# ║    docker compose up -d                                                     ║
+# ╚══════════════════════════════════════════════════════════════════════════════╝
+
+version: '3.9'
+
+# ─────────────────────────────────────────────────────────────────────────────
+# NETWORK
+# All services communicate over a single bridge network.
+# Subnet is explicitly defined to avoid conflicts with host networks.
+# No service ports are exposed except Nginx (80/443) and NATS monitoring (8222).
+# ─────────────────────────────────────────────────────────────────────────────
+networks:
+  coaching_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.22.0.0/16
+
+# ─────────────────────────────────────────────────────────────────────────────
+# VOLUMES
+# Named volumes for persistent data. Backed up via infra/scripts/backup-all.sh.
+# ─────────────────────────────────────────────────────────────────────────────
+volumes:
+  postgres_data:       # Gateway platform DB (6 tables)
+  redis_data:          # OTP cache, BullMQ queues, WebSocket adapter state
+  minio_data:          # Object storage (PDFs, HLS video, receipts)
+  moodle_data:         # Moodle site files and uploads
+  moodle_db_data:      # Moodle MariaDB data
+  erpnext_data:        # ERPNext site files (uploads, private files, custom apps)
+  erpnext_db_data:     # ERPNext MariaDB data (master identity store)
+  clickhouse_data:     # Analytics events, attendance, fee events, audit log
+  metabase_data:       # Metabase internal state (questions, dashboards)
+  novu_data:           # Novu MongoDB (notification state)
+  nats_data:           # NATS JetStream persistence (event bus durability)
+  prometheus_data:     # Metrics time-series data
+  grafana_data:        # Grafana dashboards and preferences
+  loki_data:           # Log aggregation storage
+  tempo_data:          # Distributed trace storage
+  mosquitto_data:      # MQTT broker persistence
+
+services:
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # NGINX — Reverse Proxy & SSL Termination
+  # ════════════════════════════════════════════════════════════════════════════
+  # Routes:
+  #   api.coachingos.local   → gateway:3000
+  #   app.coachingos.local   → web:3001
+  #   *.coachingos.local     → web:3001 (tenant subdomain)
+  #   ops.coachingos.local   → grafana:3000 (IP-restricted)
+  # ════════════════════════════════════════════════════════════════════════════
+  nginx:
+    image: nginx:1.25-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      gateway:
+        condition: service_healthy
+      web:
+        condition: service_started
+    networks: [coaching_network]
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.5'
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # GATEWAY — NestJS REST API (Modular Monolith)
+  # ════════════════════════════════════════════════════════════════════════════
+  # The single entry point for all client requests. Modules:
+  #   auth, tenants, admissions, students, batches, attendance, fees,
+  #   lms, tests, live-class, notifications, analytics, rfid
+  #
+  # Write path: ERPNext write → outbox → NATS event → workers
+  # Read path:  Redis cache → ERPNext fallback
+  # ════════════════════════════════════════════════════════════════════════════
+  gateway:
+    build:
+      context: ../gateway
+      dockerfile: Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+
+      # PostgreSQL via PgBouncer (connection pooling — v3 Flaw G)
+      DATABASE_URL: postgresql://coaching:${DB_PASSWORD}@pgbouncer:5432/coaching_db
+      DB_HOST: pgbouncer
+      DB_PORT: 5432
+      DB_USER: coaching
+      DB_PASS: ${DB_PASSWORD}
+      DB_NAME: coaching_db
+      ERPNEXT_DEFAULT_COMPANY: CoachingOS
+
+      # NATS JetStream (event bus — v2 Issue 6)
+      NATS_URL: nats://nats:4222
+
+      # ERPNext + Education (MASTER IDENTITY — v2 Issue 1)
+      ERPNEXT_URL: http://erpnext:8000
+      ERPNEXT_API_KEY: ${ERPNEXT_API_KEY}
+      ERPNEXT_API_SECRET: ${ERPNEXT_API_SECRET}
+
+      # Moodle (HEADLESS LMS — admin token only, no student credentials — v2 Issue 2)
+      MOODLE_URL: http://moodle:80
+      MOODLE_ADMIN_TOKEN: ${MOODLE_ADMIN_TOKEN}
+
+      # BigBlueButton (separate bare-metal server)
+      BBB_URL: https://${BBB_SERVER_DOMAIN}/bigbluebutton/api
+      BBB_SECRET: ${BBB_SECRET}
+
+      # ClickHouse (analytics events)
+      CLICKHOUSE_URL: http://clickhouse:8123
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+
+      # Metabase (embedded BI — v2 Issue 3: only Metabase, no Superset)
+      METABASE_URL: http://metabase:3000
+      METABASE_SECRET_KEY: ${METABASE_SECRET_KEY}
+
+      # Novu (notification engine)
+      NOVU_API_URL: http://novu-api:3000
+      NOVU_API_KEY: ${NOVU_API_KEY}
+
+      # MinIO (object storage)
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: 9000
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+
+      # Auth (JWT)
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      SUPERADMIN_JWT_SECRET: ${SUPERADMIN_JWT_SECRET}
+
+      # Redis (sessions, queues, OTP, cache)
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+
+      # Payments (Razorpay)
+      RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID}
+      RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET}
+      RAZORPAY_WEBHOOK_SECRET: ${RAZORPAY_WEBHOOK_SECRET}
+
+      # OpenTelemetry tracing (v2 Issue 7)
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_SERVICE_NAME: gateway
+
+    # Gateway starts only after its core dependencies are healthy
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+      pgbouncer:
+        condition: service_started
+    networks: [coaching_network]
+    restart: unless-stopped
+    # Health check from v3 Flaw F — gateway must expose /api/v1/health
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '2'
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # WEB — Next.js Admin Panel
+  # ════════════════════════════════════════════════════════════════════════════
+  # Institute admin panel, student/teacher portals, super admin.
+  # Served at app.coachingos.local and {slug}.coachingos.local
+  # ════════════════════════════════════════════════════════════════════════════
+  web:
+    build:
+      context: ../web
+      dockerfile: Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      NEXT_PUBLIC_API_URL: https://api.${DOMAIN:-coachingos.local}
+      NEXT_PUBLIC_WS_URL: wss://api.${DOMAIN:-coachingos.local}
+    depends_on:
+      gateway:
+        condition: service_healthy
+    networks: [coaching_network]
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1'
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # NATS JETSTREAM — Event Bus (v2 Issue 6)
+  # ════════════════════════════════════════════════════════════════════════════
+  # Persistent message broker for async worker pattern.
+  # Streams: STUDENT_EVENTS, BATCH_EVENTS, ATTENDANCE, FEE_EVENTS,
+  #          LMS_EVENTS, CLASS_EVENTS
+  # Workers subscribe as durable consumers with explicit ack.
+  # ════════════════════════════════════════════════════════════════════════════
+  nats:
+    image: nats:2.10-alpine
+    command: >
+      -js
+      -sd /data
+      -m 8222
+    volumes:
+      - nats_data:/data
+    ports:
+      - "8222:8222"   # Monitoring UI — internal only, do NOT expose via Nginx
+    networks: [coaching_network]
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8222/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1'
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # WORKER: Moodle (v2 Part 6.1)
+  # ════════════════════════════════════════════════════════════════════════════
+  # Subscribes to: student.created, batch.created, student.enrolled,
+  #                content.uploaded, test.submitted
+  # Creates Moodle users, courses, enrollments via admin token.
+  # ════════════════════════════════════════════════════════════════════════════
+  moodle-worker:
+    build:
+      context: ../workers/moodle-worker
+      dockerfile: Dockerfile
+    environment:
+      NATS_URL: nats://nats:4222
+      MOODLE_URL: http://moodle:80
+      MOODLE_ADMIN_TOKEN: ${MOODLE_ADMIN_TOKEN}
+      ERPNEXT_URL: http://erpnext:8000
+      ERPNEXT_API_KEY: ${ERPNEXT_API_KEY}
+      ERPNEXT_API_SECRET: ${ERPNEXT_API_SECRET}
+      OTEL_SERVICE_NAME: moodle-worker
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+    depends_on:
+      nats:
+        condition: service_healthy
+      moodle:
+        condition: service_started
+    networks: [coaching_network]
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # WORKER: Novu Notifications (v2 Part 6)
+  # ════════════════════════════════════════════════════════════════════════════
+  # Subscribes to: student.created, attendance.rfid_punch,
+  #                fee.payment.confirmed, test.submitted, attendance.student_absent
+  # Triggers WhatsApp/Push/SMS via Novu templates.
+  # ════════════════════════════════════════════════════════════════════════════
+  novu-worker:
+    build:
+      context: ../workers/novu-worker
+      dockerfile: Dockerfile
+    environment:
+      NATS_URL: nats://nats:4222
+      NOVU_API_URL: http://novu-api:3000
+      NOVU_API_KEY: ${NOVU_API_KEY}
+      ERPNEXT_URL: http://erpnext:8000
+      ERPNEXT_API_KEY: ${ERPNEXT_API_KEY}
+      ERPNEXT_API_SECRET: ${ERPNEXT_API_SECRET}
+      OTEL_SERVICE_NAME: novu-worker
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+    depends_on:
+      nats:
+        condition: service_healthy
+      novu-api:
+        condition: service_started
+    networks: [coaching_network]
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # WORKER: Analytics (v2 Part 6.3)
+  # ════════════════════════════════════════════════════════════════════════════
+  # Subscribes to: ALL event streams
+  # Writes every event to ClickHouse analytics_events / attendance_events /
+  # fee_events tables depending on event type.
+  # ════════════════════════════════════════════════════════════════════════════
+  analytics-worker:
+    build:
+      context: ../workers/analytics-worker
+      dockerfile: Dockerfile
+    environment:
+      NATS_URL: nats://nats:4222
+      CLICKHOUSE_URL: http://clickhouse:8123
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+      OTEL_SERVICE_NAME: analytics-worker
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+    depends_on:
+      nats:
+        condition: service_healthy
+      clickhouse:
+        condition: service_started
+    networks: [coaching_network]
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # POSTGRESQL — Gateway Platform DB
+  # ════════════════════════════════════════════════════════════════════════════
+  # Contains ONLY platform-level state (6 tables):
+  #   institutes, rfid_cards, jwt_refresh_tokens, event_outbox,
+  #   question_bank, test_attempts
+  #
+  # All domain data (students, batches, fees, attendance) lives in ERPNext.
+  # ════════════════════════════════════════════════════════════════════════════
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: coaching_db
+      POSTGRES_USER: coaching
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-postgres.sql:/docker-entrypoint-initdb.d/init.sql
+    networks: [coaching_network]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U coaching -d coaching_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1'
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # PGBOUNCER — Connection Pooling (v3 Flaw G)
+  # ════════════════════════════════════════════════════════════════════════════
+  # Gateway and workers connect here instead of directly to PostgreSQL.
+  # Transaction-mode pooling allows 1000 client connections with only 25
+  # actual PostgreSQL connections. Prevents connection exhaustion at scale.
+  # ════════════════════════════════════════════════════════════════════════════
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    environment:
+      DATABASE_URL: postgresql://coaching:${DB_PASSWORD}@postgres:5432/coaching_db
+      LISTEN_PORT: 5432
+      POOL_MODE: transaction
+      MAX_CLIENT_CONN: 1000
+      DEFAULT_POOL_SIZE: ${PGBOUNCER_POOL_SIZE:-25}
+      # Auth type: trust within Docker network (PgBouncer → PostgreSQL)
+      AUTH_TYPE: scram-sha-256
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [coaching_network]
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.25'
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # REDIS — Cache, Queues, Sessions
+  # ════════════════════════════════════════════════════════════════════════════
+  # Used for:
+  #   - OTP cache (5-min TTL)
+  #   - ERPNext read cache (typed TTLs from v3 Issue 1)
+  #   - BullMQ job queues (bulk import, video processing, auto-submit)
+  #   - Socket.io Redis adapter (v3 Flaw C)
+  #   - Payment idempotency keys (v3 Issue 8)
+  #   - Test timer keys
+  # ════════════════════════════════════════════════════════════════════════════
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD} --maxmemory 512mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    networks: [coaching_network]
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+          cpus: '0.5'
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # ERPNEXT + EDUCATION — Master Identity Store (v2 Issue 1)
+  # ════════════════════════════════════════════════════════════════════════════
+  # THE source of truth for all domain entities:
+  #   Student, Guardian, Instructor, Student Group (batch), Program,
+  #   Program Enrollment, Course Schedule, Student Attendance,
+  #   Assessment Plan/Result, Fee Structure/Schedule, Payment Entry
+  #
+  # Multi-company mode (v3 Issue 5): one Company per institute for isolation.
+  # ════════════════════════════════════════════════════════════════════════════
+  erpnext-db:
+    image: mariadb:10.11
+    # v3 Flaw G: MariaDB tuning to handle 100+ concurrent users
+    command: >
+      --max-connections=400
+      --innodb-buffer-pool-size=1G
+      --innodb-log-file-size=256M
+      --query-cache-type=1
+      --query-cache-size=64M
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: ${ERPNEXT_DB_ROOT_PASSWORD}
+    volumes:
+      - erpnext_db_data:/var/lib/mysql
+    networks: [coaching_network]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mariadb-admin", "ping", "-h", "localhost", "-u", "root", "-p${ERPNEXT_DB_ROOT_PASSWORD}"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2'
+
+  erpnext:
+    image: frappe/erpnext:v15
+    command: /home/frappe/frappe-bench/env/bin/gunicorn --bind 0.0.0.0:8000 --workers 4 --worker-class gthread frappe.app:application
+    environment:
+      DB_HOST: erpnext-db
+      DB_PORT: 3306
+      REDIS_CACHE: redis://:${REDIS_PASSWORD}@redis:6379/1
+      REDIS_QUEUE: redis://:${REDIS_PASSWORD}@redis:6379/2
+      FRAPPE_SITE_NAME_HEADER: erp.coaching-internal
+      SITE_CONFIG_ALLOW_CORS: "1"
+    volumes:
+      - erpnext_data:/home/frappe/frappe-bench/sites
+    depends_on:
+      erpnext-db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks: [coaching_network]
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2'
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # MOODLE — Headless LMS Backend (v2 Issue 2)
+  # ════════════════════════════════════════════════════════════════════════════
+  # Operated EXCLUSIVELY via admin web service token.
+  # Students NEVER have Moodle credentials. Every operation is a
+  # server-to-server call from gateway/moodle-worker using MOODLE_ADMIN_TOKEN.
+  #
+  # No ports exposed — accessible only from moodle-worker and gateway
+  # within the Docker network.
+  # ════════════════════════════════════════════════════════════════════════════
+  moodle-db:
+    image: mariadb:10.11
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MOODLE_DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: moodle
+      MYSQL_USER: moodle
+      MYSQL_PASSWORD: ${MOODLE_DB_PASSWORD}
+    volumes:
+      - moodle_db_data:/var/lib/mysql
+    networks: [coaching_network]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mariadb-admin", "ping", "-h", "localhost", "-u", "root", "-p${MOODLE_DB_ROOT_PASSWORD}"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1'
+
+  moodle:
+    image: lthub/moodle:latest
+    environment:
+      MOODLE_DB_TYPE: mariadb
+      MOODLE_DB_HOST: moodle-db
+      MOODLE_DB_PORT: "3306"
+      MOODLE_DB_USER: moodle
+      MOODLE_DB_PASSWORD: ${MOODLE_DB_PASSWORD}
+      MOODLE_DB_NAME: moodle
+      MOODLE_URL: http://moodle
+      MOODLE_ADMIN_USER: admin
+      MOODLE_ADMIN_PASS: ${MOODLE_ADMIN_PASSWORD}
+      MOODLE_ADMIN_EMAIL: admin@coaching.internal
+      MOODLE_SITE_FULLNAME: "CoachingOS LMS"
+      MOODLE_SITE_SHORTNAME: "CoachingOS"
+      MOODLE_SITE_LANG: en
+      MOODLE_ENABLE_SSL: "false"
+      # Enable web services for headless API access
+      MOODLE_ENABLE_WEB_SERVICES: "true"
+    volumes:
+      - moodle_data:/moodledata
+    depends_on:
+      moodle-db:
+        condition: service_healthy
+    networks: [coaching_network]
+    restart: unless-stopped
+    # No ports exposed — accessible only from moodle-worker and gateway
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1'
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # CLICKHOUSE — Analytics Engine (v3 Issue 6)
+  # ════════════════════════════════════════════════════════════════════════════
+  # Tables:
+  #   analytics_events  — MergeTree, 3-year TTL, partitioned by month
+  #   attendance_events — 5-year TTL (compliance)
+  #   fee_events        — 7-year TTL (GST compliance)
+  #   audit_log         — 7-year TTL (v3 Flaw E)
+  #
+  # Tiered storage: hot (local SSD) → cold (MinIO S3) after 1 year
+  # ════════════════════════════════════════════════════════════════════════════
+  clickhouse:
+    image: clickhouse/clickhouse-server:24.3
+    environment:
+      CLICKHOUSE_DB: coaching_analytics
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER}
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - ./scripts/init-clickhouse.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./clickhouse-config.xml:/etc/clickhouse-server/config.d/limits.xml
+    networks: [coaching_network]
+    restart: unless-stopped
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2'
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # METABASE — Embedded BI (v2 Issue 3: replaces Metabase + Superset)
+  # ════════════════════════════════════════════════════════════════════════════
+  # - Signed JWT embedding for multi-tenant iframe dashboards
+  # - Native ClickHouse support via official driver JAR
+  # - Internal analytics for ops + embedded charts for institute admins
+  #
+  # Uses PostgreSQL (coaching_db/metabase) for its internal metadata.
+  # ════════════════════════════════════════════════════════════════════════════
+  metabase:
+    image: metabase/metabase:v0.49.0
+    environment:
+      MB_DB_TYPE: postgres
+      MB_DB_DBNAME: metabase
+      MB_DB_PORT: 5432
+      MB_DB_USER: coaching
+      MB_DB_PASS: ${DB_PASSWORD}
+      MB_DB_HOST: postgres
+      MB_EMBEDDING_SECRET_KEY: ${METABASE_SECRET_KEY}
+      MB_ENABLE_EMBEDDING: "true"
+      MB_APPLICATION_NAME: "Analytics"
+      MB_APPLICATION_LOGO_URL: ""
+      # Java heap for Metabase JVM
+      JAVA_OPTS: "-Xmx1g -Xms512m"
+    volumes:
+      - ./metabase-plugins:/plugins   # ClickHouse driver JAR goes here
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [coaching_network]
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1536M
+          cpus: '1'
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # NOVU — Notification Engine
+  # ════════════════════════════════════════════════════════════════════════════
+  # Multi-channel notification routing:
+  #   WhatsApp (via Wati.io), SMS (MSG91), Push (Firebase), Email
+  # Templates managed via admin panel API.
+  # novu-worker (NATS subscriber) triggers notifications on domain events.
+  # ════════════════════════════════════════════════════════════════════════════
+  novu-api:
+    image: ghcr.io/novuhq/novu/api:0.24.0
+    environment:
+      NODE_ENV: production
+      MONGO_URL: mongodb://novu-mongo:27017/novu
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      JWT_SECRET: ${NOVU_JWT_SECRET}
+      STORE_ENCRYPTION_KEY: ${NOVU_ENCRYPTION_KEY}
+      API_ROOT_URL: http://novu-api:3000
+    depends_on:
+      novu-mongo:
+        condition: service_started
+      redis:
+        condition: service_healthy
+    networks: [coaching_network]
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+
+  novu-mongo:
+    image: mongo:6.0
+    volumes:
+      - novu_data:/data/db
+    networks: [coaching_network]
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # MINIO — Object Storage
+  # ════════════════════════════════════════════════════════════════════════════
+  # Stores: PDFs, HLS video segments, receipts, watermarked files,
+  #         ClickHouse cold-tier data, bulk import CSVs, error reports
+  # ════════════════════════════════════════════════════════════════════════════
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
+    volumes:
+      - minio_data:/data
+    networks: [coaching_network]
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1'
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # RFID SERVICE — Lightweight RFID Punch Receiver
+  # ════════════════════════════════════════════════════════════════════════════
+  # Receives RFID card punches from hardware readers via MQTT,
+  # validates card_uid against PostgreSQL rfid_cards table,
+  # publishes attendance.rfid_punch events to NATS.
+  # ════════════════════════════════════════════════════════════════════════════
+  rfid-service:
+    build:
+      context: ../rfid-service
+      dockerfile: Dockerfile
+    environment:
+      PORT: 4000
+      GATEWAY_URL: http://gateway:3000
+      MQTT_BROKER: mqtt://mosquitto:1883
+      RFID_SERVICE_TOKEN: ${RFID_SERVICE_TOKEN}
+      NATS_URL: nats://nats:4222
+      OTEL_SERVICE_NAME: rfid-service
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+    depends_on:
+      nats:
+        condition: service_healthy
+    networks: [coaching_network]
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # MOSQUITTO — MQTT Broker for RFID Hardware Readers
+  # ════════════════════════════════════════════════════════════════════════════
+  # ESP32/Arduino RFID readers publish card punches to MQTT topics.
+  # rfid-service subscribes and processes them.
+  # ════════════════════════════════════════════════════════════════════════════
+  mosquitto:
+    image: eclipse-mosquitto:2.0
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mosquitto_data:/mosquitto/data
+    networks: [coaching_network]
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.25'
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # OBSERVABILITY STACK (v2 Issue 7)
+  # ════════════════════════════════════════════════════════════════════════════
+  # PLG stack: Prometheus (metrics) + Loki (logs) + Grafana (dashboards)
+  # Plus: Tempo (traces) + OTel Collector (trace pipeline)
+  #
+  # Every service emits:
+  #   - Metrics → Prometheus scrapes
+  #   - Logs → Promtail ships to Loki
+  #   - Traces → OTel Collector forwards to Tempo
+  # ════════════════════════════════════════════════════════════════════════════
+
+  prometheus:
+    image: prom/prometheus:v2.48.0
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./observability/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--web.enable-lifecycle'
+      - '--storage.tsdb.retention.time=30d'
+    networks: [coaching_network]
+    restart: unless-stopped
+    # NOT exposed via Nginx to internet — internal ops only
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1'
+
+  grafana:
+    image: grafana/grafana:10.2.0
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
+      GF_SERVER_ROOT_URL: https://ops.${DOMAIN:-coachingos.local}
+      GF_INSTALL_PLUGINS: grafana-clock-panel,grafana-simple-json-datasource
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./observability/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./observability/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    depends_on:
+      - prometheus
+      - loki
+      - tempo
+    networks: [coaching_network]
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+
+  loki:
+    image: grafana/loki:2.9.0
+    command: -config.file=/etc/loki/config.yaml
+    volumes:
+      - ./observability/loki-config.yaml:/etc/loki/config.yaml:ro
+      - loki_data:/loki
+    networks: [coaching_network]
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+
+  promtail:
+    image: grafana/promtail:2.9.0
+    command: -config.file=/etc/promtail/config.yaml
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./observability/promtail-config.yaml:/etc/promtail/config.yaml:ro
+    depends_on:
+      - loki
+    networks: [coaching_network]
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+
+  tempo:
+    image: grafana/tempo:2.3.0
+    command: -config.file=/etc/tempo/config.yaml
+    volumes:
+      - ./observability/tempo-config.yaml:/etc/tempo/config.yaml:ro
+      - tempo_data:/tmp/tempo
+    networks: [coaching_network]
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.88.0
+    volumes:
+      - ./observability/otel-collector.yaml:/etc/otel/config.yaml:ro
+    command: --config /etc/otel/config.yaml
+    depends_on:
+      - tempo
+    networks: [coaching_network]
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'

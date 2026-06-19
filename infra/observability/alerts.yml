@@ -1,0 +1,51 @@
+# CoachingOS — Prometheus Alert Rules
+groups:
+  - name: coaching_platform
+    rules:
+      - alert: NatsQueueBacklog
+        expr: nats_core_slow_consumer_msgs > 500
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "NATS queue backlog — workers may be down"
+          description: "More than 500 unprocessed messages in NATS for 5+ minutes"
+
+      - alert: ErpNextHighErrorRate
+        expr: rate(http_requests_total{job="gateway", status=~"5.."}[5m]) > 0.05
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Gateway API error rate > 5%"
+
+      - alert: AttendanceWebhookLag
+        expr: time() - coaching_last_rfid_punch_timestamp > 3600
+        labels:
+          severity: warning
+        annotations:
+          summary: "No RFID punches received in 1 hour during school hours"
+
+      - alert: MoodleWorkerDown
+        expr: up{job="moodle-worker"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Moodle worker is down — LMS operations will queue"
+
+      - alert: OutboxDeadEvents
+        expr: coaching_outbox_dead_count > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Dead events in outbox — manual intervention required"
+
+      - alert: HighMemoryUsage
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes > 0.9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Memory usage above 90%"

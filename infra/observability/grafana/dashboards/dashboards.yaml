@@ -1,0 +1,13 @@
+# CoachingOS — Grafana Dashboard Provisioning
+apiVersion: 1
+
+providers:
+  - name: 'CoachingOS'
+    orgId: 1
+    folder: 'CoachingOS'
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /etc/grafana/provisioning/dashboards
+      foldersFromFilesStructure: false

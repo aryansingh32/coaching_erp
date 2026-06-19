@@ -1,0 +1,106 @@
+# =============================================================================
+# CoachingOS Monorepo GitIgnore
+# =============================================================================
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 1. Dependency Directories
+# ─────────────────────────────────────────────────────────────────────────────
+node_modules/
+jspm_packages/
+web_modules/
+
+# Python Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+*.pyc
+__pycache__/
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 2. Build & Cache Artifacts
+# ─────────────────────────────────────────────────────────────────────────────
+dist/
+build/
+.next/
+.nuxt/
+out/
+.cache/
+.parcel-cache/
+.eslintcache/
+.tsbuildinfo
+.npm/
+.yarn/
+.pnpm-store/
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 3. Environment Variables & Secrets (CRITICAL for Security)
+# ─────────────────────────────────────────────────────────────────────────────
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+!*.env.example
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 4. Large Media, Uploads & Assets
+# ─────────────────────────────────────────────────────────────────────────────
+# BigBlueButton raw recordings and audio/video files
+*.flv
+*.mp4
+*.wav
+*.mp3
+*.webm
+*.avi
+*.mkv
+bigbluebutton/record-and-playback/core/resources/raw/
+
+# Moodle data and uploads (if any are stored in the repo path)
+moodledata/
+moodle/public/uploaddata/
+
+# General large files
+*.zip
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+*.iso
+*.dmg
+
+# Parquet and Large Dataset formats
+*.parquet
+*.csv
+*.tsv
+*.sql.gz
+*.json.gz
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 5. Service-Specific Exclusions (Source code of third-party platforms)
+# ─────────────────────────────────────────────────────────────────────────────
+# If you run Moodle, ClickHouse, Metabase, and Superset in Docker, 
+# you don't need their full cloned repositories tracked in Git.
+# Uncomment the lines below if you want to completely ignore their source folders:
+clickhouse/
+moodle/
+metabase/
+superset/
+erpnext/
+bigbluebutton/
+education/
+novu/
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 6. IDEs, Editors & System Files
+# ─────────────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.suo
+*.user
+*.workspace
+*.sublime-project
+*.sublime-workspace

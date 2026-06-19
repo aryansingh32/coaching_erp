@@ -1,0 +1,40 @@
+# CoachingOS — Prometheus Configuration
+# Scrapes metrics from all services every 15 seconds.
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - /etc/prometheus/alerts.yml
+
+scrape_configs:
+  - job_name: 'gateway'
+    static_configs:
+      - targets: ['gateway:3000']
+    metrics_path: /metrics
+
+  - job_name: 'moodle-worker'
+    static_configs:
+      - targets: ['moodle-worker:3010']
+    metrics_path: /metrics
+
+  - job_name: 'novu-worker'
+    static_configs:
+      - targets: ['novu-worker:3011']
+    metrics_path: /metrics
+
+  - job_name: 'analytics-worker'
+    static_configs:
+      - targets: ['analytics-worker:3012']
+    metrics_path: /metrics
+
+  - job_name: 'nats'
+    static_configs:
+      - targets: ['nats:8222']
+    metrics_path: /metrics
+
+  - job_name: 'rfid-service'
+    static_configs:
+      - targets: ['rfid-service:4000']
+    metrics_path: /metrics
