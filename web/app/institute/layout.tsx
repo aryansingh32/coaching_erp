@@ -2,39 +2,59 @@
 
 import { ReactNode } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { 
-  Bell, 
-  LayoutDashboard, 
-  Users, 
-  BookOpen, 
+import { usePathname, useRouter } from "next/navigation"
+import {
+  Bell,
+  LayoutDashboard,
+  Users,
+  BookOpen,
   CalendarDays,
   CreditCard,
-  Video,
   BarChart3,
   Settings,
-  Menu
+  Menu,
+  LogOut,
 } from "lucide-react"
+import { AuthGuard } from "@/components/auth/auth-guard"
 import { useAuthStore } from "@/lib/stores/auth-store"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+
+import { NovuNotificationBell } from "@/components/notifications/novu-bell"
+import { useFeatures, INSTITUTE_NAV_FEATURES } from "@/lib/features"
 
 const sidebarNavigation = [
   { name: "Dashboard", href: "/institute/dashboard", icon: LayoutDashboard },
   { name: "Students", href: "/institute/students", icon: Users },
   { name: "Batches", href: "/institute/batches", icon: BookOpen },
+  { name: "Schedule", href: "/institute/schedule", icon: CalendarDays },
   { name: "Attendance", href: "/institute/attendance", icon: CalendarDays },
+  { name: "Grades", href: "/institute/grades", icon: BarChart3 },
   { name: "Finance", href: "/institute/finance", icon: CreditCard },
   { name: "Exams", href: "/institute/exams", icon: BookOpen },
-  { name: "Communication", href: "/institute/communication", icon: BarChart3 },
   { name: "Settings", href: "/institute/settings", icon: Settings },
 ]
 
 export default function InstituteLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname()
-  const branding = useAuthStore((state) => state.branding)
+  const router = useRouter()
+  const { branding, displayName, logout } = useAuthStore()
+  const features = useFeatures()
+  const notificationsEnabled = features.notifications === true
+
+  const visibleNav = sidebarNavigation.filter((item) => {
+    const feature = INSTITUTE_NAV_FEATURES[item.href]
+    if (!feature) return true
+    return features[feature] === true
+  })
+
+  const handleLogout = () => {
+    logout()
+    router.push('/login')
+  }
 
   return (
+    <AuthGuard allowedRoles={['admin']}>
     <div className="min-h-screen bg-institute-bg-base flex flex-col md:flex-row">
       {/* Mobile Header */}
       <div className="md:hidden flex items-center justify-between p-4 bg-institute-bg-surface border-b border-institute-border">
@@ -74,7 +94,7 @@ export default function InstituteLayout({ children }: { children: ReactNode }) {
           <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 mt-4 px-3">
             Menu
           </div>
-          {sidebarNavigation.map((item) => {
+          {visibleNav.map((item) => {
             const isActive = pathname.startsWith(item.href)
             return (
               <Link
@@ -105,13 +125,16 @@ export default function InstituteLayout({ children }: { children: ReactNode }) {
             {pathname.split('/').pop() || 'Dashboard'}
           </h2>
           <div className="flex items-center space-x-4">
+            {notificationsEnabled && <NovuNotificationBell />}
             <Button variant="ghost" size="icon" className="relative">
               <Bell className="w-5 h-5 text-muted-foreground" />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-institute-danger rounded-full" />
             </Button>
             <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-medium border border-primary/30">
-              A
+              {displayName?.[0] ?? 'A'}
             </div>
+            <Button variant="ghost" size="icon" onClick={handleLogout} title="Sign out">
+              <LogOut className="w-4 h-4" />
+            </Button>
           </div>
         </header>
 
@@ -120,5 +143,6 @@ export default function InstituteLayout({ children }: { children: ReactNode }) {
         </main>
       </div>
     </div>
+    </AuthGuard>
   )
 }

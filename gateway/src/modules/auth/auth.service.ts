@@ -4,6 +4,11 @@ import { ConfigService } from '@nestjs/config';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { EducationAdapter } from '../../adapters/erpnext/education.adapter';
+import { FeaturesService } from '../../shared/feature-flags/features.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Institute } from '../../shared/entities/institute.entity';
+import { DEFAULT_TENANT_ID } from '../../shared/constants/tenant.constants';
 
 @Injectable()
 export class AuthService {
@@ -13,71 +18,135 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly erpAdapter: EducationAdapter,
+    private readonly featuresService: FeaturesService,
+    @InjectRepository(Institute) private readonly instituteRepo: Repository<Institute>,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
+  private isSuperAdminPhone(phone: string): boolean {
+    const allowed = this.configService.get<string>('SUPER_ADMIN_PHONES') || '';
+    return allowed.split(',').map((p) => p.trim()).filter(Boolean).includes(phone);
+  }
+
   async sendOtp(phone: string, role: string): Promise<any> {
-    // 1. Verify existence in ERPNext based on role
-    // Assuming we mostly test student for now, or adapt based on role
-    if (role === 'student') {
-      await this.erpAdapter.getStudentByPhone(phone); // Throws 404 if not found
-    } else {
-      // Stub for instructor / parent logic
+    if (role === 'super_admin') {
+      if (!this.isSuperAdminPhone(phone)) {
+        throw new UnauthorizedException('Not authorized as platform admin');
+      }
+    } else if (role === 'student') {
+      await this.erpAdapter.getStudentByPhone(phone);
+    } else if (role === 'instructor') {
+      await this.erpAdapter.getInstructorByPhone(phone);
+    } else if (role === 'parent') {
+      await this.erpAdapter.getGuardianByPhone(phone);
+    } else if (role === 'admin') {
+      try {
+        await this.erpAdapter.getInstructorByPhone(phone);
+      } catch {
+        const users = await this.erpAdapter.listDocs('User', [['mobile_no', '=', phone]]);
+        if (!users?.length) {
+          throw new UnauthorizedException('Admin user not found');
+        }
+      }
     }
-    
-    // 2. Generate OTP
-    const otp = '123456'; // hardcoded for testing/dev per standard simplified flows, in prod use crypto/random
-    const cacheKey = `otp:${phone}`;
-    await this.cacheManager.set(cacheKey, otp, 300); // 5 minutes TTL
-    
-    // 3. Send SMS (mocked)
-    this.logger.log(`Sending OTP ${otp} to ${phone}`);
+
+    const otp = this.configService.get<string>('OTP_DEV_CODE') || '123456';
+    const cacheKey = `otp:${phone}:${role}`;
+    await this.cacheManager.set(cacheKey, otp, 300);
+    this.logger.log(`OTP sent to ${phone} for role ${role}`);
     return { message: 'OTP sent successfully' };
   }
 
   async verifyOtp(phone: string, otp: string, role: string): Promise<any> {
-    const cacheKey = `otp:${phone}`;
+    const cacheKey = `otp:${phone}:${role}`;
     const storedOtp = await this.cacheManager.get<string>(cacheKey);
 
     if (!storedOtp || storedOtp !== otp) {
       throw new UnauthorizedException('Invalid or expired OTP');
     }
 
-    // Determine ERP user details
-    let erpUser;
-    if (role === 'student') {
+    let erpUser: any;
+    let linkedStudents: string[] = [];
+    let tenantId =
+      this.configService.get<string>('DEFAULT_TENANT_ID') || DEFAULT_TENANT_ID;
+
+    if (role === 'super_admin') {
+      if (!this.isSuperAdminPhone(phone)) {
+        throw new UnauthorizedException('Not authorized as platform admin');
+      }
+      erpUser = { name: `superadmin-${phone}`, first_name: 'Platform', last_name: 'Admin' };
+    } else if (role === 'student') {
       erpUser = await this.erpAdapter.getStudentByPhone(phone);
+    } else if (role === 'instructor') {
+      erpUser = await this.erpAdapter.getInstructorByPhone(phone);
+    } else if (role === 'parent') {
+      const guardian = await this.erpAdapter.getGuardianByPhone(phone);
+      const students = await this.erpAdapter.getStudentsByGuardian(guardian.name);
+      linkedStudents = students.map((s: any) => s.name);
+      erpUser = { ...guardian, linkedStudents };
+    } else if (role === 'admin') {
+      try {
+        erpUser = await this.erpAdapter.getInstructorByPhone(phone);
+      } catch {
+        const users = await this.erpAdapter.listDocs('User', [['mobile_no', '=', phone]]);
+        erpUser = users[0];
+      }
     } else {
-      erpUser = { name: `mock-${role}-${phone}` };
+      throw new UnauthorizedException('Invalid role');
     }
 
     await this.cacheManager.del(cacheKey);
 
-    const payload = { sub: erpUser.name, role: role, tenantId: 'default' };
+    const tenant = await this.instituteRepo.findOne({ where: { id: tenantId } });
+    const features = await this.featuresService.getTenantFeatures(tenantId);
+    const branding = {
+      primaryColor: tenant?.branding?.primaryColor || '#1e40af',
+      instituteName: tenant?.name || 'Coaching Institute',
+      logoUrl: tenant?.branding?.logoUrl,
+    };
+
+    const payload = {
+      sub: erpUser.name,
+      role,
+      tenantId,
+      linkedStudents: linkedStudents.length ? linkedStudents : undefined,
+    };
     const accessToken = this.jwtService.sign(payload);
     const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
 
-    // Normally store refreshToken hash in Postgres here for rotation
     return {
       accessToken,
       refreshToken,
-      user: erpUser
+      user: erpUser,
+      role,
+      tenantId,
+      linkedStudents,
+      branding,
+      features,
     };
+  }
+
+  async getFeatures(tenantId: string) {
+    return this.featuresService.getTenantFeatures(tenantId);
   }
 
   async refreshToken(token: string): Promise<any> {
     try {
       const decoded = this.jwtService.verify(token);
-      const payload = { sub: decoded.sub, role: decoded.role, tenantId: decoded.tenantId };
+      const payload = {
+        sub: decoded.sub,
+        role: decoded.role,
+        tenantId: decoded.tenantId,
+        linkedStudents: decoded.linkedStudents,
+      };
       const accessToken = this.jwtService.sign(payload);
       return { accessToken };
-    } catch (e) {
+    } catch {
       throw new UnauthorizedException('Invalid refresh token');
     }
   }
 
   async logout(token: string): Promise<any> {
-    // Blacklist token logic could go here
     return { message: 'Logged out successfully' };
   }
 }

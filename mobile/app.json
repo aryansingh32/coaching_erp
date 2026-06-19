@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "CoachingOS",
+    "slug": "coachingos",
+    "version": "1.0.0",
+    "scheme": "coachingos",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#0F1117"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.coachingos.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0F1117"
+      },
+      "package": "com.coachingos.app"
+    },
+    "plugins": ["expo-router", "expo-secure-store"]
+  }
+}

@@ -1,40 +1,30 @@
 "use client"
 
-import { useQuery } from "@tanstack/react-query"
+import { useKpis, useDashboardEmbed } from "@/lib/api/hooks"
+import { useAuthStore } from "@/lib/stores/auth-store"
 import { Users, GraduationCap, DollarSign, Activity } from "lucide-react"
-import { apiClient } from "@/lib/api-client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ProgressRing } from "@/components/shared/progress-ring"
+import { LoadingState } from "@/components/shared/loading-state"
+import { ErrorState } from "@/components/shared/error-state"
+import { LiveFeedLog } from "@/components/attendance/live-feed-log"
 
-// Mock the API structure based on the research report
-interface KPIResponse {
-  success: boolean
-  data: {
-    totalStudents: number
-    activeBatches: number
-    revenueMonthly: number
-    attendanceToday: number // Percentage
-  }
-}
+const DASHBOARD_ID = parseInt(process.env.NEXT_PUBLIC_METABASE_DASHBOARD_ID || '1', 10)
 
 export default function InstituteDashboard() {
-  const { data, isLoading } = useQuery<KPIResponse>({
-    queryKey: ["analytics", "kpis"],
-    queryFn: () => apiClient.get("/analytics/kpis"),
-  })
+  const tenantId = useAuthStore((s) => s.tenantId) ?? undefined
+  const { data: kpis, isLoading, isError, refetch } = useKpis(tenantId)
+  const { data: dashboard } = useDashboardEmbed(DASHBOARD_ID, tenantId)
 
-  // Fallback mock data in case the gateway isn't running
-  const kpis = data?.data || {
-    totalStudents: 1248,
-    activeBatches: 42,
-    revenueMonthly: 425000,
-    attendanceToday: 86,
-  }
+  if (isLoading) return <LoadingState message="Loading dashboard..." />
+  if (isError) return <ErrorState onRetry={() => refetch()} />
+
+  const attendanceToday = kpis?.attendanceToday ?? 0
 
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-2xl font-bold tracking-tight text-institute-text-primary">Overview</h3>
+        <h3 className="text-2xl font-bold tracking-tight">Overview</h3>
         <p className="text-muted-foreground">Here&apos;s what&apos;s happening at your institute today.</p>
       </div>
 
@@ -45,8 +35,7 @@ export default function InstituteDashboard() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{isLoading ? "..." : kpis.totalStudents}</div>
-            <p className="text-xs text-muted-foreground">+12% from last month</p>
+            <div className="text-2xl font-bold">{kpis?.totalStudents ?? 0}</div>
           </CardContent>
         </Card>
 
@@ -56,8 +45,7 @@ export default function InstituteDashboard() {
             <GraduationCap className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{isLoading ? "..." : kpis.activeBatches}</div>
-            <p className="text-xs text-muted-foreground">3 batches starting next week</p>
+            <div className="text-2xl font-bold">{kpis?.activeBatches ?? 0}</div>
           </CardContent>
         </Card>
 
@@ -68,9 +56,8 @@ export default function InstituteDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-institute-success">
-              {isLoading ? "..." : `₹${kpis.revenueMonthly.toLocaleString()}`}
+              ₹{(kpis?.revenueMonthly ?? 0).toLocaleString('en-IN')}
             </div>
-            <p className="text-xs text-muted-foreground">₹45,000 pending this month</p>
           </CardContent>
         </Card>
 
@@ -81,28 +68,38 @@ export default function InstituteDashboard() {
           </CardHeader>
           <CardContent className="flex items-center justify-between">
             <div>
-              <div className="text-2xl font-bold">{isLoading ? "..." : `${kpis.attendanceToday}%`}</div>
-              <p className="text-xs text-muted-foreground">24 students absent</p>
+              <div className="text-2xl font-bold">
+                {attendanceToday > 0 ? `${attendanceToday}%` : '—'}
+              </div>
             </div>
-            {!isLoading && (
-              <ProgressRing 
-                value={kpis.attendanceToday} 
-                size="sm" 
-                color={kpis.attendanceToday > 80 ? "success" : "warning"} 
+            {attendanceToday > 0 && (
+              <ProgressRing
+                value={attendanceToday}
+                size="sm"
+                color={attendanceToday > 80 ? 'success' : 'warning'}
               />
             )}
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7 mt-8">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         <Card className="col-span-4 border-institute-border shadow-sm">
           <CardHeader>
-            <CardTitle>Attendance Trends</CardTitle>
+            <CardTitle>Analytics</CardTitle>
           </CardHeader>
-          <CardContent className="h-[300px] flex items-center justify-center border-t border-dashed border-institute-border mt-4">
-            {/* Metabase embedded chart will go here */}
-            <p className="text-muted-foreground text-sm">Analytics Chart Placeholder</p>
+          <CardContent className="h-[300px]">
+            {dashboard?.url ? (
+              <iframe
+                src={dashboard.url}
+                className="w-full h-full border-0 rounded-md"
+                title="Institute Analytics"
+              />
+            ) : (
+              <div className="h-full flex items-center justify-center border border-dashed rounded-md">
+                <p className="text-muted-foreground text-sm">Analytics dashboard unavailable</p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -111,20 +108,7 @@ export default function InstituteDashboard() {
             <CardTitle>Recent RFID Punches</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="flex items-center">
-                  <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center mr-3">
-                    <span className="text-xs font-medium">S{i}</span>
-                  </div>
-                  <div className="flex-1 space-y-1">
-                    <p className="text-sm font-medium leading-none">Student Name {i}</p>
-                    <p className="text-xs text-muted-foreground">JEE Mains Target Batch</p>
-                  </div>
-                  <div className="text-xs text-institute-success font-medium">08:{15 + i} AM</div>
-                </div>
-              ))}
-            </div>
+            <LiveFeedLog />
           </CardContent>
         </Card>
       </div>

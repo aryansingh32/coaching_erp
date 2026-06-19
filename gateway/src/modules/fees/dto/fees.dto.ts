@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsNumber } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
 
 export class GenerateFeeScheduleDto {
   @IsString()
@@ -22,6 +22,52 @@ export class RecordPaymentDto {
   @IsString()
   @IsNotEmpty()
   referenceNumber: string;
+}
+
+export class CreateRazorpayOrderDto {
+  @IsString()
+  @IsNotEmpty()
+  studentId: string;
+
+  @IsNumber()
+  @IsNotEmpty()
+  amount: number;
+
+  @IsString()
+  @IsOptional()
+  feeId?: string;
+}
+
+export class VerifyRazorpayPaymentDto {
+  @IsString()
+  @IsNotEmpty()
+  studentId: string;
+
+  @IsNumber()
+  @IsNotEmpty()
+  amount: number;
+
+  @IsString()
+  @IsNotEmpty()
+  razorpay_order_id: string;
+
+  @IsString()
+  @IsNotEmpty()
+  razorpay_payment_id: string;
+
+  @IsString()
+  @IsNotEmpty()
+  razorpay_signature: string;
+}
+
+export class SaveRazorpayConfigDto {
+  @IsString()
+  @IsNotEmpty()
+  keyId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  keySecret: string;
 }
 
 export class RazorpayWebhookDto {

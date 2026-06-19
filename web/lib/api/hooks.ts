@@ -1,0 +1,382 @@
+'use client'
+
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import * as api from './services'
+import { queryKeys } from './query-keys'
+
+// ─── Students ───────────────────────────────────────────────────────────────
+
+export function useStudents() {
+  return useQuery({
+    queryKey: queryKeys.students.all,
+    queryFn: api.listStudents,
+  })
+}
+
+export function useStudent(erpId: string) {
+  return useQuery({
+    queryKey: queryKeys.students.detail(erpId),
+    queryFn: () => api.getStudent(erpId),
+    enabled: !!erpId,
+  })
+}
+
+export function useStudentTimeline(erpId: string) {
+  return useQuery({
+    queryKey: queryKeys.students.timeline(erpId),
+    queryFn: () => api.getStudentTimeline(erpId),
+    enabled: !!erpId,
+  })
+}
+
+export function useCreateStudent() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: api.createStudent,
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.students.all }),
+  })
+}
+
+export function useUpdateStudent() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ erpId, data }: { erpId: string; data: Parameters<typeof api.updateStudent>[1] }) =>
+      api.updateStudent(erpId, data),
+    onSuccess: (_, { erpId }) => {
+      qc.invalidateQueries({ queryKey: queryKeys.students.all })
+      qc.invalidateQueries({ queryKey: queryKeys.students.detail(erpId) })
+    },
+  })
+}
+
+export function useBulkImportStudents() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: api.bulkImportStudents,
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.students.all }),
+  })
+}
+
+// ─── Batches ────────────────────────────────────────────────────────────────
+
+export function useBatches() {
+  return useQuery({
+    queryKey: queryKeys.batches.all,
+    queryFn: api.listBatches,
+  })
+}
+
+export function useBatch(id: string) {
+  return useQuery({
+    queryKey: queryKeys.batches.detail(id),
+    queryFn: () => api.getBatch(id),
+    enabled: !!id,
+  })
+}
+
+export function useCreateBatch() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: api.createBatch,
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.batches.all }),
+  })
+}
+
+export function useEnrollStudent() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ batchId, studentId }: { batchId: string; studentId: string }) =>
+      api.enrollStudent(batchId, studentId),
+    onSuccess: (_, { batchId }) => {
+      qc.invalidateQueries({ queryKey: queryKeys.batches.all })
+      qc.invalidateQueries({ queryKey: queryKeys.batches.detail(batchId) })
+    },
+  })
+}
+
+export function useScheduleBatch() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      batchId,
+      data,
+    }: {
+      batchId: string
+      data: Parameters<typeof api.scheduleBatch>[1]
+    }) => api.scheduleBatch(batchId, data),
+    onSuccess: (_, { batchId }) => {
+      qc.invalidateQueries({ queryKey: queryKeys.batches.detail(batchId) })
+    },
+  })
+}
+
+// ─── Attendance ─────────────────────────────────────────────────────────────
+
+export function useAttendanceReports(batchId: string, startDate: string, endDate: string) {
+  return useQuery({
+    queryKey: queryKeys.attendance.reports(batchId, startDate, endDate),
+    queryFn: () => api.getAttendanceReports(batchId, startDate, endDate),
+    enabled: !!batchId && !!startDate && !!endDate,
+  })
+}
+
+export function useMarkAttendance() {
+  return useMutation({
+    mutationFn: api.markManualAttendance,
+  })
+}
+
+// ─── Fees ───────────────────────────────────────────────────────────────────
+
+export function usePendingFees(studentId: string) {
+  return useQuery({
+    queryKey: queryKeys.fees.pending(studentId),
+    queryFn: () => api.getPendingFees(studentId),
+    enabled: !!studentId,
+  })
+}
+
+export function useRecordPayment() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: api.recordPayment,
+    onSuccess: (_, { studentId }) => {
+      qc.invalidateQueries({ queryKey: queryKeys.fees.pending(studentId) })
+    },
+  })
+}
+
+// ─── Analytics ──────────────────────────────────────────────────────────────
+
+export function useKpis(tenantId?: string) {
+  return useQuery({
+    queryKey: queryKeys.analytics.kpis(tenantId),
+    queryFn: () => api.getKpis(tenantId),
+  })
+}
+
+export function useDashboardEmbed(id: number, tenantId?: string) {
+  return useQuery({
+    queryKey: queryKeys.analytics.dashboard(id, tenantId),
+    queryFn: () => api.getDashboardEmbed(id, tenantId),
+    enabled: id > 0,
+  })
+}
+
+// ─── Tenants ────────────────────────────────────────────────────────────────
+
+export function useTenants() {
+  return useQuery({
+    queryKey: queryKeys.tenants.all,
+    queryFn: api.listTenants,
+  })
+}
+
+export function useTenant(id: string) {
+  return useQuery({
+    queryKey: queryKeys.tenants.detail(id),
+    queryFn: () => api.getTenant(id),
+    enabled: !!id,
+  })
+}
+
+export function useCreateTenant() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: api.createTenant,
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.tenants.all }),
+  })
+}
+
+export function useUpdateTenant() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
+      api.updateTenant(id, data),
+    onSuccess: (_, { id }) => {
+      qc.invalidateQueries({ queryKey: queryKeys.tenants.all })
+      qc.invalidateQueries({ queryKey: queryKeys.tenants.detail(id) })
+    },
+  })
+}
+
+// ─── Health ───────────────────────────────────────────────────────────────────
+
+export function useHealth() {
+  return useQuery({
+    queryKey: queryKeys.health.liveness,
+    queryFn: api.checkHealth,
+    refetchInterval: 30_000,
+  })
+}
+
+export function useReadiness() {
+  return useQuery({
+    queryKey: queryKeys.health.readiness,
+    queryFn: api.checkReadiness,
+    refetchInterval: 30_000,
+  })
+}
+
+export function useParentChildren() {
+  return useQuery({
+    queryKey: queryKeys.education.children,
+    queryFn: api.getParentChildren,
+  })
+}
+
+export function useStudentSchedule(studentId: string) {
+  return useQuery({
+    queryKey: queryKeys.education.schedule(studentId),
+    queryFn: () => api.getStudentSchedule(studentId),
+    enabled: !!studentId,
+  })
+}
+
+export function useStudentPrograms(studentId: string) {
+  return useQuery({
+    queryKey: queryKeys.education.programs(studentId),
+    queryFn: () => api.getStudentPrograms(studentId),
+    enabled: !!studentId,
+  })
+}
+
+export function useStudentGrades(studentId: string, program: string) {
+  return useQuery({
+    queryKey: queryKeys.education.grades(studentId, program),
+    queryFn: () => api.getStudentGrades(studentId, program),
+    enabled: !!studentId && !!program,
+  })
+}
+
+export function useStudentInvoices(studentId: string) {
+  return useQuery({
+    queryKey: queryKeys.education.invoices(studentId),
+    queryFn: () => api.getStudentInvoices(studentId),
+    enabled: !!studentId,
+  })
+}
+
+export function useTests(courseIds: number[]) {
+  return useQuery({
+    queryKey: queryKeys.tests(courseIds),
+    queryFn: () => api.listTests(courseIds),
+    enabled: courseIds.length > 0,
+  })
+}
+
+export function useLmsCourses() {
+  return useQuery({
+    queryKey: queryKeys.lms.courses,
+    queryFn: api.listLmsCourses,
+  })
+}
+
+export function usePlatformStats() {
+  return useQuery({
+    queryKey: queryKeys.superadmin.stats,
+    queryFn: api.getPlatformStats,
+    refetchInterval: 30_000,
+  })
+}
+
+export function useAuditLogs(filters?: Parameters<typeof api.getAuditLogs>[0]) {
+  return useQuery({
+    queryKey: queryKeys.superadmin.auditLogs(JSON.stringify(filters)),
+    queryFn: () => api.getAuditLogs(filters),
+    refetchInterval: 15_000,
+  })
+}
+
+export function useTenantMetrics(tenantId: string) {
+  return useQuery({
+    queryKey: queryKeys.superadmin.tenantMetrics(tenantId),
+    queryFn: () => api.getTenantMetrics(tenantId),
+    enabled: !!tenantId,
+  })
+}
+
+export function useCreateLiveClass() {
+  return useMutation({
+    mutationFn: ({ batchId, name }: { batchId: string; name: string }) =>
+      api.createLiveClass(batchId, name),
+  })
+}
+
+export function useJoinLiveClass() {
+  return useMutation({
+    mutationFn: ({ meetingId, fullName }: { meetingId: string; fullName?: string }) =>
+      api.joinLiveClass(meetingId, fullName),
+  })
+}
+
+export function useLiveClasses(batchId?: string) {
+  return useQuery({
+    queryKey: ['live-class', batchId ?? 'all'],
+    queryFn: () => api.listLiveClasses(batchId),
+  })
+}
+
+export function useEndLiveClass() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: api.endLiveClass,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['live-class'] }),
+  })
+}
+
+export function useFeatureCatalog() {
+  return useQuery({
+    queryKey: ['features', 'catalog'],
+    queryFn: api.getFeatureCatalog,
+  })
+}
+
+export function useTenantFeatures(tenantId: string) {
+  return useQuery({
+    queryKey: ['features', 'tenant', tenantId],
+    queryFn: () => api.getTenantFeatures(tenantId),
+    enabled: !!tenantId,
+  })
+}
+
+export function useUpdateTenantFeatures() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ tenantId, features }: { tenantId: string; features: Record<string, boolean> }) =>
+      api.updateTenantFeatures(tenantId, features),
+    onSuccess: (_, { tenantId }) => {
+      qc.invalidateQueries({ queryKey: ['features', 'tenant', tenantId] })
+      qc.invalidateQueries({ queryKey: queryKeys.tenants.detail(tenantId) })
+    },
+  })
+}
+
+export function useSaveRazorpayConfig() {
+  return useMutation({
+    mutationFn: api.saveRazorpayConfig,
+  })
+}
+
+export function useApplyLeave() {
+  return useMutation({
+    mutationFn: ({
+      studentId,
+      data,
+    }: {
+      studentId: string
+      data: Parameters<typeof api.applyLeave>[1]
+    }) => api.applyLeave(studentId, data),
+  })
+}
+
+export function useSuspendTenant() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: api.suspendTenant,
+    onSuccess: (_, id) => {
+      qc.invalidateQueries({ queryKey: queryKeys.tenants.all })
+      qc.invalidateQueries({ queryKey: queryKeys.superadmin.tenantMetrics(id) })
+    },
+  })
+}

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { join } from 'path';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule } from '@nestjs/throttler';
@@ -19,6 +20,14 @@ import { FeesModule } from './modules/fees/fees.module';
 import { HealthModule } from './modules/health/health.module';
 import { TenantsModule } from './modules/tenants/tenants.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { LiveClassModule } from './modules/live-class/live-class.module';
+import { TestsModule } from './modules/tests/tests.module';
+import { LmsModule } from './modules/lms/lms.module';
+import { EducationPortalModule } from './modules/education-portal/education-portal.module';
+import { ProxyModule } from './modules/proxy/proxy.module';
+import { SuperadminModule } from './modules/superadmin/superadmin.module';
+import { AuditModule } from './shared/audit/audit.module';
+import { FeaturesModule } from './shared/feature-flags/features.module';
 
 @Module({
   imports: [
@@ -38,11 +47,21 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
         METABASE_URL: Joi.string().required(),
         METABASE_SECRET_KEY: Joi.string().required(),
         JWT_SECRET: Joi.string().required(),
+        SUPER_ADMIN_PHONES: Joi.string().optional(),
+        OTP_DEV_CODE: Joi.string().optional(),
+        METABASE_DASHBOARD_ID: Joi.number().optional(),
+        NOVU_APP_ID: Joi.string().optional(),
+        RAZORPAY_KEY_ID: Joi.string().optional(),
+        RAZORPAY_KEY_SECRET: Joi.string().optional(),
+        RAZORPAY_WEBHOOK_SECRET: Joi.string().optional(),
         DB_HOST: Joi.string().required(),
         DB_PORT: Joi.number().default(5432),
         DB_USER: Joi.string().required(),
         DB_PASS: Joi.string().required(),
         DB_NAME: Joi.string().required(),
+        DB_SYNCHRONIZE: Joi.string().optional(),
+        RUN_MIGRATIONS: Joi.string().optional(),
+        DEFAULT_TENANT_ID: Joi.string().optional(),
       }),
     }),
     TypeOrmModule.forRootAsync({
@@ -55,7 +74,12 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
         password: configService.get<string>('DB_PASS'),
         database: configService.get<string>('DB_NAME'),
         autoLoadEntities: true,
-        synchronize: configService.get<string>('NODE_ENV') !== 'production',
+        synchronize:
+          configService.get<string>('DB_SYNCHRONIZE') === 'true' ||
+          (configService.get<string>('NODE_ENV') === 'development' &&
+            configService.get<string>('DB_SYNCHRONIZE') !== 'false'),
+        migrations: [join(__dirname, 'database', 'migrations', '*.{js,ts}')],
+        migrationsRun: configService.get<string>('RUN_MIGRATIONS') === 'true',
       }),
       inject: [ConfigService],
     }),
@@ -89,6 +113,14 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
     HealthModule,
     TenantsModule,
     AnalyticsModule,
+    LiveClassModule,
+    TestsModule,
+    LmsModule,
+    EducationPortalModule,
+    ProxyModule,
+    SuperadminModule,
+    AuditModule,
+    FeaturesModule,
   ],
 })
 export class AppModule {}

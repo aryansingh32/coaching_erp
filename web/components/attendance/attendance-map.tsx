@@ -2,35 +2,34 @@
 
 import { useMemo } from "react"
 import { format, subDays, startOfWeek, addDays } from "date-fns"
+import { useAttendanceReports } from "@/lib/api/hooks"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { LoadingState } from "@/components/shared/loading-state"
+import { EmptyState } from "@/components/shared/empty-state"
 
 export function AttendanceMap({ batchId }: { batchId?: string }) {
-  // Generate 90 days of mock attendance density data
-  const heatmapData = useMemo(() => {
-    const data = []
-    for (let i = 89; i >= 0; i--) {
-      const date = subDays(new Date(), i)
-      // Random attendance rate between 70% and 100%
-      const attendanceRate = Math.floor(Math.random() * 30) + 70
-      data.push({
-        date,
-        rate: attendanceRate,
-      })
-    }
-    return data
-  }, [batchId])
+  const endDate = format(new Date(), 'yyyy-MM-dd')
+  const startDate = format(subDays(new Date(), 90), 'yyyy-MM-dd')
+  const { data: reports, isLoading } = useAttendanceReports(batchId ?? '', startDate, endDate)
 
-  // Group by weeks for the grid
+  const heatmapData = useMemo(() => {
+    if (!reports?.length) return []
+    return reports.map((r) => {
+      const total = r.present + r.absent
+      const rate = total > 0 ? Math.round((r.present / total) * 100) : 0
+      return { date: new Date(r.date), rate }
+    })
+  }, [reports])
+
   const weeks = useMemo(() => {
     if (heatmapData.length === 0) return []
     const firstDate = heatmapData[0].date
-    const startDate = startOfWeek(firstDate)
-    
-    const weeksArr = []
-    let currentWeek = []
-    let currentDay = startDate
-    
-    // Padding start
+    const start = startOfWeek(firstDate)
+
+    const weeksArr: (typeof heatmapData[0] | null)[][] = []
+    let currentWeek: (typeof heatmapData[0] | null)[] = []
+    let currentDay = start
+
     while (currentDay < firstDate) {
       currentWeek.push(null)
       currentDay = addDays(currentDay, 1)
@@ -43,11 +42,9 @@ export function AttendanceMap({ batchId }: { batchId?: string }) {
       }
       currentWeek.push(day)
     }
-    
+
     if (currentWeek.length > 0) {
-      while (currentWeek.length < 7) {
-        currentWeek.push(null)
-      }
+      while (currentWeek.length < 7) currentWeek.push(null)
       weeksArr.push(currentWeek)
     }
 
@@ -62,43 +59,49 @@ export function AttendanceMap({ batchId }: { batchId?: string }) {
     return "bg-institute-danger"
   }
 
+  if (!batchId) {
+    return (
+      <Card>
+        <CardContent className="py-8">
+          <EmptyState title="Select a batch" description="Choose a batch to view attendance heatmap." />
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (isLoading) return <LoadingState message="Loading heatmap..." />
+
   return (
     <Card className="border-institute-border shadow-sm">
       <CardHeader>
-        <CardTitle>90-Day Attendance Heatmap</CardTitle>
-        <CardDescription>
-          {batchId ? `Showing density for ${batchId}` : "Showing overall campus density"}
-        </CardDescription>
+        <CardTitle>Attendance Heatmap</CardTitle>
+        <CardDescription>From GET /attendance/reports for {batchId}</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex justify-start overflow-x-auto pb-4">
-          <div className="flex gap-1">
-            {weeks.map((week, wIndex) => (
-              <div key={wIndex} className="flex flex-col gap-1">
-                {week.map((day, dIndex) => {
-                  if (!day) return <div key={dIndex} className="w-3 h-3 rounded-sm bg-transparent" />
-                  return (
-                    <div
-                      key={dIndex}
-                      className={`w-3 h-3 rounded-sm transition-colors hover:ring-2 hover:ring-ring ${getColor(day.rate)}`}
-                      title={`${format(day.date, "MMM d, yyyy")}: ${day.rate}% present`}
-                    />
-                  )
-                })}
+        {!heatmapData.length ? (
+          <EmptyState title="No report data" />
+        ) : (
+          <>
+            <div className="flex justify-start overflow-x-auto pb-4">
+              <div className="flex gap-1">
+                {weeks.map((week, wIndex) => (
+                  <div key={wIndex} className="flex flex-col gap-1">
+                    {week.map((day, dIndex) => {
+                      if (!day) return <div key={dIndex} className="w-3 h-3 rounded-sm bg-transparent" />
+                      return (
+                        <div
+                          key={dIndex}
+                          className={`w-3 h-3 rounded-sm ${getColor(day.rate)}`}
+                          title={`${format(day.date, "MMM d, yyyy")}: ${day.rate}% present`}
+                        />
+                      )
+                    })}
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
-        <div className="flex items-center justify-end space-x-2 mt-2 text-xs text-muted-foreground">
-          <span>Lower</span>
-          <div className="flex gap-1">
-            <div className="w-3 h-3 rounded-sm bg-institute-danger" />
-            <div className="w-3 h-3 rounded-sm bg-institute-warning" />
-            <div className="w-3 h-3 rounded-sm bg-institute-success/60" />
-            <div className="w-3 h-3 rounded-sm bg-institute-success" />
-          </div>
-          <span>Higher</span>
-        </div>
+            </div>
+          </>
+        )}
       </CardContent>
     </Card>
   )

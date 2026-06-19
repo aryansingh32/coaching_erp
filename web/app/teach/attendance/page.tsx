@@ -1,88 +1,106 @@
 "use client"
 
 import { useState } from "react"
-import { CheckCircle2, XCircle, Search, Save, AlertTriangle } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { format } from "date-fns"
+import { CheckCircle2, XCircle, Search, Save } from "lucide-react"
+import { useBatches, useStudents, useMarkAttendance } from "@/lib/api/hooks"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useToast } from "@/components/ui/use-toast"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { LoadingState } from "@/components/shared/loading-state"
+import { ErrorState } from "@/components/shared/error-state"
+import { EmptyState } from "@/components/shared/empty-state"
+import { toast } from "sonner"
+import type { Batch } from "@/lib/api/types"
 
-const MOCK_STUDENTS = [
-  { id: "STU-001", name: "Alice Smith", rfidScanned: true },
-  { id: "STU-002", name: "Bob Johnson", rfidScanned: false },
-  { id: "STU-003", name: "Charlie Williams", rfidScanned: true },
-  { id: "STU-004", name: "David Jones", rfidScanned: false },
-  { id: "STU-005", name: "Eve Brown", rfidScanned: false },
-  { id: "STU-006", name: "Faythe Davis", rfidScanned: false },
-  { id: "STU-007", name: "Grace Miller", rfidScanned: true },
-  { id: "STU-008", name: "Heidi Wilson", rfidScanned: false },
-]
+function getBatchId(batch: Batch) {
+  return batch.id ?? batch.name ?? batch.student_group_name ?? ''
+}
 
 export default function TeachAttendancePage() {
-  const { toast } = useToast()
-  const [selectedBatch, setSelectedBatch] = useState("BCH-A-24")
-  const [searchTerm, setSearchTerm] = useState("")
-  const [isSaving, setIsSaving] = useState(false)
-  
-  // Track manual overrides. Key is student ID, value is 'present' | 'absent' | null (unset)
-  const [attendanceState, setAttendanceState] = useState<Record<string, 'present' | 'absent'>>({})
+  const { data: batches, isLoading: batchesLoading } = useBatches()
+  const { data: students, isLoading: studentsLoading, isError, refetch } = useStudents()
+  const markAttendance = useMarkAttendance()
 
-  const filteredStudents = MOCK_STUDENTS.filter(s => 
-    s.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    s.id.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const [selectedBatch, setSelectedBatch] = useState('')
+  const [searchTerm, setSearchTerm] = useState('')
+  const [attendanceState, setAttendanceState] = useState<Record<string, 'Present' | 'Absent'>>({})
 
-  const toggleAttendance = (id: string, status: 'present' | 'absent') => {
-    setAttendanceState(prev => ({
-      ...prev,
-      [id]: status
-    }))
+  const batchId = selectedBatch || (batches?.[0] ? getBatchId(batches[0]) : '')
+  const today = format(new Date(), 'yyyy-MM-dd')
+
+  const filteredStudents = (students ?? []).filter((s) => {
+    const name = `${s.first_name} ${s.last_name ?? ''}`.toLowerCase()
+    return name.includes(searchTerm.toLowerCase()) || s.name.toLowerCase().includes(searchTerm.toLowerCase())
+  })
+
+  const toggleAttendance = (id: string, status: 'Present' | 'Absent') => {
+    setAttendanceState((prev) => ({ ...prev, [id]: status }))
   }
 
-  const markAllPresent = () => {
-    const newState: Record<string, 'present' | 'absent'> = {}
-    MOCK_STUDENTS.forEach(s => {
-      // Don't override if they already scanned RFID
-      if (!s.rfidScanned) {
-        newState[s.id] = 'present'
-      }
-    })
-    setAttendanceState(prev => ({ ...prev, ...newState }))
+  const handleSave = async () => {
+    const entries = Object.entries(attendanceState)
+    if (!entries.length) {
+      toast.error('Mark attendance for at least one student')
+      return
+    }
+
+    try {
+      await Promise.all(
+        entries.map(([studentId, status]) =>
+          markAttendance.mutateAsync({
+            studentId,
+            date: today,
+            status,
+            batchId,
+          })
+        )
+      )
+      toast.success('Attendance submitted via POST /attendance/manual')
+      setAttendanceState({})
+    } catch (err: unknown) {
+      const e = err as { message?: string }
+      toast.error(e?.message || 'Failed to submit attendance')
+    }
   }
 
-  const handleSave = () => {
-    setIsSaving(true)
-    setTimeout(() => {
-      toast({
-        title: "Attendance Submitted",
-        description: `Successfully recorded manual attendance for ${selectedBatch}.`,
-      })
-      setIsSaving(false)
-    }, 1000)
-  }
+  if (batchesLoading || studentsLoading) return <LoadingState />
+  if (isError) return <ErrorState onRetry={() => refetch()} />
 
   return (
-    <div className="space-y-6 max-w-3xl mx-auto animate-in fade-in duration-500">
+    <div className="space-y-6 max-w-3xl mx-auto">
       <div>
         <h2 className="text-3xl font-bold tracking-tight text-slate-900 mb-2">Manual Attendance</h2>
-        <p className="text-slate-500">Override or mark attendance for students who missed the RFID scanner.</p>
+        <p className="text-slate-500">Mark attendance for students via the gateway API.</p>
       </div>
 
-      <Card className="border-slate-200 shadow-sm sticky top-0 z-10 bg-white/80 backdrop-blur-md">
-        <CardContent className="p-4 sm:p-6 flex flex-col sm:flex-row gap-4 justify-between items-center">
-          <div className="w-full sm:w-1/3">
-            <Select value={selectedBatch} onValueChange={setSelectedBatch}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Batch" />
+      <Card className="border-slate-200 shadow-sm">
+        <CardContent className="p-4 sm:p-6 flex flex-col sm:flex-row gap-4">
+          {batches && batches.length > 0 && (
+            <Select value={batchId} onValueChange={setSelectedBatch}>
+              <SelectTrigger className="w-full sm:w-48">
+                <SelectValue placeholder="Select batch" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="BCH-A-24">BCH-A-24 (Physics)</SelectItem>
-                <SelectItem value="BCH-B-24">BCH-B-24 (Chemistry)</SelectItem>
+                {batches.map((b) => {
+                  const id = getBatchId(b)
+                  return (
+                    <SelectItem key={id} value={id}>
+                      {b.student_group_name ?? b.name ?? id}
+                    </SelectItem>
+                  )
+                })}
               </SelectContent>
             </Select>
-          </div>
-          <div className="relative w-full sm:w-1/3 flex-1">
+          )}
+          <div className="relative flex-1">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
             <Input
               placeholder="Search student..."
@@ -91,70 +109,56 @@ export default function TeachAttendancePage() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <Button onClick={handleSave} disabled={isSaving} className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white shrink-0">
-            {isSaving ? "Saving..." : <><Save className="mr-2 h-4 w-4" /> Submit Register</>}
+          <Button
+            onClick={handleSave}
+            disabled={markAttendance.isPending}
+            className="bg-blue-600 hover:bg-blue-700 text-white shrink-0"
+          >
+            <Save className="mr-2 h-4 w-4" />
+            {markAttendance.isPending ? 'Saving...' : 'Submit'}
           </Button>
         </CardContent>
       </Card>
 
-      <div className="flex justify-between items-center px-2">
-        <span className="text-sm font-medium text-slate-600">Showing {filteredStudents.length} students</span>
-        <Button variant="ghost" size="sm" onClick={markAllPresent} className="text-blue-600 hover:text-blue-700 hover:bg-blue-50">
-          Mark Unscanned as Present
-        </Button>
-      </div>
-
-      <div className="space-y-3">
-        {filteredStudents.map((student) => {
-          const isPresent = attendanceState[student.id] === 'present' || student.rfidScanned
-          const isAbsent = attendanceState[student.id] === 'absent'
-
-          return (
-            <Card key={student.id} className={`overflow-hidden transition-colors ${isPresent ? 'bg-green-50/50 border-green-200' : isAbsent ? 'bg-red-50/50 border-red-200' : 'border-slate-200'}`}>
-              <CardContent className="p-3 sm:p-4 flex items-center justify-between">
-                <div>
-                  <h4 className="font-semibold text-slate-900">{student.name}</h4>
-                  <div className="flex items-center space-x-2 mt-1 text-xs">
-                    <span className="font-mono text-slate-500">{student.id}</span>
-                    {student.rfidScanned ? (
-                      <span className="text-green-600 font-medium flex items-center">
-                        <CheckCircle2 className="w-3 h-3 mr-1" /> Scanned via Gate
-                      </span>
-                    ) : (
-                      <span className="text-amber-600 flex items-center">
-                        <AlertTriangle className="w-3 h-3 mr-1" /> No RFID Scan
-                      </span>
-                    )}
+      {!filteredStudents.length ? (
+        <EmptyState title="No students" />
+      ) : (
+        <div className="space-y-3">
+          {filteredStudents.map((student) => {
+            const id = student.name
+            const status = attendanceState[id]
+            return (
+              <Card key={id} className="border-slate-200">
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div>
+                    <h4 className="font-semibold text-slate-900">
+                      {student.first_name} {student.last_name ?? ''}
+                    </h4>
+                    <p className="text-xs font-mono text-slate-500">{id}</p>
                   </div>
-                </div>
-
-                <div className="flex space-x-2">
-                  <Button 
-                    size="sm" 
-                    variant={isPresent && !student.rfidScanned ? "default" : "outline"}
-                    className={isPresent && !student.rfidScanned ? "bg-green-600 hover:bg-green-700" : "text-slate-600"}
-                    onClick={() => toggleAttendance(student.id, 'present')}
-                    disabled={student.rfidScanned}
-                  >
-                    <CheckCircle2 className="w-4 h-4 sm:mr-2" />
-                    <span className="hidden sm:inline">Present</span>
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant={isAbsent ? "destructive" : "outline"}
-                    className={!isAbsent ? "text-slate-600" : ""}
-                    onClick={() => toggleAttendance(student.id, 'absent')}
-                    disabled={student.rfidScanned}
-                  >
-                    <XCircle className="w-4 h-4 sm:mr-2" />
-                    <span className="hidden sm:inline">Absent</span>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )
-        })}
-      </div>
+                  <div className="flex space-x-2">
+                    <Button
+                      size="sm"
+                      variant={status === 'Present' ? 'default' : 'outline'}
+                      className={status === 'Present' ? 'bg-green-600 hover:bg-green-700' : ''}
+                      onClick={() => toggleAttendance(id, 'Present')}
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={status === 'Absent' ? 'destructive' : 'outline'}
+                      onClick={() => toggleAttendance(id, 'Absent')}
+                    >
+                      <XCircle className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }

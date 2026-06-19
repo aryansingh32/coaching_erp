@@ -15,7 +15,11 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js"
+    "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js",
+    "migration:run": "npm run build && npm run typeorm -- migration:run -d dist/database/data-source.js",
+    "migration:run:dev": "npm run typeorm -- migration:run -d src/database/data-source.ts",
+    "migration:revert": "npm run typeorm -- migration:revert -d dist/database/data-source.js",
+    "migration:show": "npm run typeorm -- migration:show -d dist/database/data-source.js"
   },
   "dependencies": {
     "@nestjs/axios": "^3.1.3",

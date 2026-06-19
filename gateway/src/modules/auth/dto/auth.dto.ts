@@ -5,7 +5,7 @@ export class SendOtpDto {
   @IsNotEmpty()
   phone: string;
 
-  @IsEnum(['student', 'instructor', 'parent'])
+  @IsEnum(['student', 'instructor', 'parent', 'admin', 'super_admin'])
   role: string;
 }
 
@@ -18,7 +18,7 @@ export class VerifyOtpDto {
   @IsNotEmpty()
   otp: string;
   
-  @IsEnum(['student', 'instructor', 'parent'])
+  @IsEnum(['student', 'instructor', 'parent', 'admin', 'super_admin'])
   role: string;
 }
 

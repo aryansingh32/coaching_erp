@@ -1,12 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { useQuery } from "@tanstack/react-query"
-import { Search, Plus, FileDown, FileUp, MoreHorizontal, CheckCircle2, XCircle } from "lucide-react"
-import { apiClient } from "@/lib/api-client"
+import Link from "next/link"
+import { Search, Plus, FileUp, MoreHorizontal, CheckCircle2, XCircle } from "lucide-react"
+import { useStudents, useBulkImportStudents } from "@/lib/api/hooks"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import {
   Table,
   TableBody,
@@ -16,83 +16,66 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { ProgressRing } from "@/components/shared/progress-ring"
+import { LoadingState } from "@/components/shared/loading-state"
+import { ErrorState } from "@/components/shared/error-state"
+import { EmptyState } from "@/components/shared/empty-state"
+import { toast } from "sonner"
+import type { Student } from "@/lib/api/types"
 
-interface Student {
-  id: string
-  first_name: string
-  last_name: string
-  student_email_id: string
-  student_mobile_number: string
-  custom_rank?: number
-  attendance_percentage?: number
-  status: "Active" | "Inactive" | "Suspended"
+function getStudentId(student: Student) {
+  return student.name
 }
 
 export default function StudentsPage() {
   const [searchQuery, setSearchQuery] = useState("")
+  const { data: students, isLoading, isError, refetch } = useStudents()
+  const bulkImport = useBulkImportStudents()
 
-  // Fetch students from the gateway
-  const { data, isLoading } = useQuery({
-    queryKey: ["students"],
-    queryFn: () => apiClient.get("/students"),
+  const filteredStudents = (students ?? []).filter((student) => {
+    const name = `${student.first_name} ${student.last_name ?? ''}`.toLowerCase()
+    const id = getStudentId(student).toLowerCase()
+    const q = searchQuery.toLowerCase()
+    return name.includes(q) || id.includes(q)
   })
 
-  const students: Student[] = data?.data || [
-    {
-      id: "STU-001",
-      first_name: "Aarav",
-      last_name: "Sharma",
-      student_email_id: "aarav@example.com",
-      student_mobile_number: "9876543210",
-      custom_rank: 12,
-      attendance_percentage: 92,
-      status: "Active"
-    },
-    {
-      id: "STU-002",
-      first_name: "Priya",
-      last_name: "Patel",
-      student_email_id: "priya@example.com",
-      student_mobile_number: "9876543211",
-      custom_rank: 4,
-      attendance_percentage: 98,
-      status: "Active"
-    },
-    {
-      id: "STU-003",
-      first_name: "Rohan",
-      last_name: "Gupta",
-      student_email_id: "rohan@example.com",
-      student_mobile_number: "9876543212",
-      attendance_percentage: 74,
-      status: "Active"
+  const handleImport = () => {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = '.csv'
+    input.onchange = async () => {
+      const file = input.files?.[0]
+      if (!file) return
+      try {
+        const result = await bulkImport.mutateAsync(file)
+        toast.success(`Imported ${(result as { count?: number }).count ?? ''} students`)
+      } catch (err: unknown) {
+        const e = err as { message?: string }
+        toast.error(e?.message || 'Import failed')
+      }
     }
-  ]
+    input.click()
+  }
 
-  const filteredStudents = students.filter(student => 
-    `${student.first_name} ${student.last_name}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    student.id.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  if (isLoading) return <LoadingState message="Loading students..." />
+  if (isError) return <ErrorState onRetry={() => refetch()} />
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h3 className="text-2xl font-bold tracking-tight text-institute-text-primary">Students</h3>
-          <p className="text-muted-foreground">Manage your enrolled students and their academic profiles.</p>
+          <h3 className="text-2xl font-bold tracking-tight">Students</h3>
+          <p className="text-muted-foreground">Manage enrolled students from ERPNext.</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm">
-            <FileDown className="mr-2 h-4 w-4" />
-            Export
-          </Button>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={handleImport} disabled={bulkImport.isPending}>
             <FileUp className="mr-2 h-4 w-4" />
-            Import CSV
+            {bulkImport.isPending ? 'Importing...' : 'Import CSV'}
           </Button>
-          <Button size="sm">
-            <Plus className="mr-2 h-4 w-4" />
-            Add Student
+          <Button size="sm" asChild>
+            <Link href="/institute/students/new">
+              <Plus className="mr-2 h-4 w-4" />
+              Add Student
+            </Link>
           </Button>
         </div>
       </div>
@@ -103,7 +86,7 @@ export default function StudentsPage() {
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
-              placeholder="Search students by name or ID..."
+              placeholder="Search students..."
               className="pl-9"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -111,86 +94,82 @@ export default function StudentsPage() {
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader className="bg-muted/50">
-              <TableRow>
-                <TableHead className="w-[100px]">ID</TableHead>
-                <TableHead>Student</TableHead>
-                <TableHead>Contact</TableHead>
-                <TableHead className="text-center">Attendance</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
+          {filteredStudents.length === 0 ? (
+            <EmptyState title="No students found" />
+          ) : (
+            <Table>
+              <TableHeader className="bg-muted/50">
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                    Loading students...
-                  </TableCell>
+                  <TableHead className="w-[100px]">ID</TableHead>
+                  <TableHead>Student</TableHead>
+                  <TableHead>Contact</TableHead>
+                  <TableHead className="text-center">Attendance</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              ) : filteredStudents.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                    No students found.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredStudents.map((student) => (
-                  <TableRow key={student.id} className="group">
-                    <TableCell className="font-medium font-mono text-sm">{student.id}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
-                          {student.first_name[0]}{student.last_name[0]}
-                        </div>
-                        <div>
-                          <div className="font-medium text-institute-text-primary">
-                            {student.first_name} {student.last_name}
+              </TableHeader>
+              <TableBody>
+                {filteredStudents.map((student) => {
+                  const id = getStudentId(student)
+                  const isActive = student.enabled !== 0
+                  return (
+                    <TableRow key={id} className="group">
+                      <TableCell className="font-medium font-mono text-sm">{id}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
+                            {student.first_name[0]}
+                            {(student.last_name ?? '')[0] ?? ''}
                           </div>
-                          {student.custom_rank && (
-                            <div className="text-xs text-muted-foreground">
-                              Rank: #{student.custom_rank}
+                          <div>
+                            <div className="font-medium">
+                              {student.first_name} {student.last_name ?? ''}
                             </div>
-                          )}
+                          </div>
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm">{student.student_mobile_number}</div>
-                      <div className="text-xs text-muted-foreground">{student.student_email_id}</div>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <div className="flex justify-center">
-                        <ProgressRing 
-                          value={student.attendance_percentage || 0} 
-                          size="sm" 
-                          color={(student.attendance_percentage || 0) > 85 ? "success" : "warning"} 
-                        />
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center text-sm">
-                        {student.status === "Active" ? (
-                          <CheckCircle2 className="mr-1 h-4 w-4 text-institute-success" />
-                        ) : (
-                          <XCircle className="mr-1 h-4 w-4 text-institute-danger" />
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">{student.student_mobile_number ?? '—'}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {student.student_email_id ?? '—'}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {student.attendance_percentage != null && (
+                          <div className="flex justify-center">
+                            <ProgressRing
+                              value={student.attendance_percentage}
+                              size="sm"
+                              color={student.attendance_percentage > 85 ? 'success' : 'warning'}
+                            />
+                          </div>
                         )}
-                        <span className={student.status === "Active" ? "text-institute-success" : "text-institute-danger"}>
-                          {student.status}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center text-sm">
+                          {isActive ? (
+                            <CheckCircle2 className="mr-1 h-4 w-4 text-institute-success" />
+                          ) : (
+                            <XCircle className="mr-1 h-4 w-4 text-institute-danger" />
+                          )}
+                          <span className={isActive ? 'text-institute-success' : 'text-institute-danger'}>
+                            {isActive ? 'Active' : 'Inactive'}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="icon" asChild>
+                          <Link href={`/institute/students/${encodeURIComponent(id)}`}>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Link>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>

@@ -23,10 +23,11 @@ WORKDIR /app
 RUN addgroup --system --gid 1001 nestjs && \
     adduser --system --uid 1001 nestjs
 
-# Copy built artifacts and production dependencies
 COPY --from=builder --chown=nestjs:nestjs /app/dist ./dist
 COPY --from=builder --chown=nestjs:nestjs /app/node_modules ./node_modules
 COPY --from=builder --chown=nestjs:nestjs /app/package.json ./
+COPY --from=builder --chown=nestjs:nestjs /app/scripts ./scripts
+RUN chmod +x scripts/start.sh
 
 USER nestjs
 
@@ -36,4 +37,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
 
 EXPOSE 3000
 
-CMD ["node", "dist/main"]
+CMD ["sh", "scripts/start.sh"]

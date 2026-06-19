@@ -18,6 +18,12 @@ export class Institute {
   @Column('jsonb', { nullable: true })
   branding: Record<string, any>;
 
+  @Column('jsonb', { nullable: true, default: {} })
+  features: Record<string, boolean>;
+
+  @Column('jsonb', { nullable: true, default: {} })
+  integrations: Record<string, any>;
+
   @Column({ nullable: true })
   erp_company: string;
 

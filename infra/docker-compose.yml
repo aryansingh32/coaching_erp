@@ -109,6 +109,7 @@ services:
       DB_USER: coaching
       DB_PASS: ${DB_PASSWORD}
       DB_NAME: coaching_db
+      DEFAULT_TENANT_ID: "00000000-0000-0000-0000-000000000001"
       ERPNEXT_DEFAULT_COMPANY: CoachingOS
 
       # NATS JetStream (event bus — v2 Issue 6)

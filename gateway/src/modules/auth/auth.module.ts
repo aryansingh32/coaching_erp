@@ -6,12 +6,17 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { RolesGuard } from './guards/roles.guard';
 import { ErpnextModule } from '../../adapters/erpnext/erpnext.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Institute } from '../../shared/entities/institute.entity';
 
 @Module({
   imports: [
     PassportModule,
     CacheModule.register(),
+    TypeOrmModule.forFeature([Institute]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
@@ -23,7 +28,7 @@ import { ErpnextModule } from '../../adapters/erpnext/erpnext.module';
     ErpnextModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
-  exports: [AuthService, JwtModule],
+  providers: [AuthService, JwtStrategy, JwtAuthGuard, RolesGuard],
+  exports: [AuthService, JwtModule, JwtAuthGuard, RolesGuard, PassportModule],
 })
 export class AuthModule {}
