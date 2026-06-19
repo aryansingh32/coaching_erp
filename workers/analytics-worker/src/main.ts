@@ -30,18 +30,34 @@ async function bootstrap() {
   const js = nc.jetstream();
 
   // We want to subscribe to ALL events across streams
-  const streams = ['STUDENT_EVENTS', 'BATCH_EVENTS', 'ATTENDANCE', 'FEE_EVENTS', 'LMS_EVENTS', 'CLASS_EVENTS'];
+  const streams = [
+    { name: 'STUDENT_EVENTS', subject: 'student.>' },
+    { name: 'BATCH_EVENTS', subject: 'batch.>' },
+    { name: 'ATTENDANCE', subject: 'attendance.>' },
+    { name: 'FEE_EVENTS', subject: 'fee.>' },
+    { name: 'LMS_EVENTS', subject: 'lms.>' },
+    { name: 'CLASS_EVENTS', subject: 'class.>' },
+  ];
   
   for (const stream of streams) {
     try {
-      await jsm.consumers.add(stream, {
-        durable_name: `analytics-worker-${stream}`,
+      await jsm.consumers.add(stream.name, {
+        durable_name: `analytics-worker-${stream.name}`,
         ack_policy: AckPolicy.Explicit,
-        deliver_policy: DeliverPolicy.All
+        deliver_policy: DeliverPolicy.All,
+        filter_subject: stream.subject,
       });
-      
-      const sub = await js.pullSubscribe('>', {
-        config: { durable_name: `analytics-worker-${stream}` }
+    } catch (err) {
+      if ((err as any).message.includes('consumer already exists') || (err as any).message.includes('durable name already in use')) {
+        console.log(`Consumer for ${stream.name} already exists.`);
+      } else {
+        console.error(`Error creating consumer for ${stream.name}:`, (err as any).message);
+      }
+    }
+
+    try {
+      const sub = await js.pullSubscribe(stream.subject, {
+        config: { durable_name: `analytics-worker-${stream.name}` }
       });
 
       (async () => {
@@ -87,7 +103,7 @@ async function bootstrap() {
       }, 1000);
       
     } catch (err) {
-      console.error(`Error creating consumer for ${stream}`, err);
+      console.error(`Error subscribing to ${stream.name}:`, (err as any).message);
     }
   }
 

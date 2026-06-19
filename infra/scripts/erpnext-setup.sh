@@ -6,32 +6,41 @@
 
 set -euo pipefail
 
+# Load environment variables from .env if present
+if [ -f .env ]; then
+  echo "Loading environment variables from .env..."
+  export $(grep -v '^#' .env | xargs)
+elif [ -f ../.env ]; then
+  echo "Loading environment variables from ../.env..."
+  export $(grep -v '^#' ../.env | xargs)
+fi
+
 echo "⏳ Waiting for ERPNext to be ready..."
-until docker exec erpnext bench --version 2>/dev/null; do
+until docker compose exec -T erpnext bench --version 2>/dev/null; do
   echo "  ERPNext not ready yet, retrying in 10s..."
   sleep 10
 done
 echo "✅ ERPNext is running"
 
 echo "📦 Creating site..."
-docker exec erpnext bash -c "
+docker compose exec -T erpnext bash -c "
   cd /home/frappe/frappe-bench && \
   bench new-site erp.coaching-internal \
     --db-host erpnext-db \
-    --mariadb-root-password \${ERPNEXT_DB_ROOT_PASSWORD:-erpnext_root_pass} \
-    --admin-password \${ERPNEXT_ADMIN_PASSWORD:-admin} \
+    --mariadb-root-password ${ERPNEXT_DB_ROOT_PASSWORD:-erpnext_root_pass} \
+    --admin-password ${ERPNEXT_ADMIN_PASSWORD:-admin} \
     --no-mariadb-socket || echo 'Site may already exist, continuing...'
 "
 
 echo "📦 Installing apps: erpnext → hrms → education..."
-docker exec erpnext bash -c "
+docker compose exec -T erpnext bash -c "
   cd /home/frappe/frappe-bench && \
   bench --site erp.coaching-internal install-app erpnext || echo 'erpnext already installed' && \
   bench --site erp.coaching-internal install-app education || echo 'education already installed'
 "
 
 echo "🔧 Enabling CORS for gateway access..."
-docker exec erpnext bash -c "
+docker compose exec -T erpnext bash -c "
   cd /home/frappe/frappe-bench && \
   bench --site erp.coaching-internal set-config allow_cors 1 && \
   bench --site erp.coaching-internal set-config cors_origin 'http://gateway:3000'

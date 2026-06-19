@@ -28,6 +28,15 @@ import { ProxyModule } from './modules/proxy/proxy.module';
 import { SuperadminModule } from './modules/superadmin/superadmin.module';
 import { AuditModule } from './shared/audit/audit.module';
 import { FeaturesModule } from './shared/feature-flags/features.module';
+import {
+  Institute,
+  RfidCard,
+  JwtRefreshToken,
+  EventOutbox,
+  QuestionBank,
+  TestAttempt,
+  LiveMeeting,
+} from './shared/entities';
 
 @Module({
   imports: [
@@ -37,13 +46,13 @@ import { FeaturesModule } from './shared/feature-flags/features.module';
         NODE_ENV: Joi.string().valid('development', 'production', 'test').default('development'),
         PORT: Joi.number().default(3000),
         ERPNEXT_URL: Joi.string().required(),
-        ERPNEXT_API_KEY: Joi.string().required(),
-        ERPNEXT_API_SECRET: Joi.string().required(),
+        ERPNEXT_API_KEY: Joi.string().allow('').required(),
+        ERPNEXT_API_SECRET: Joi.string().allow('').required(),
         ERPNEXT_DEFAULT_COMPANY: Joi.string().required(),
         MOODLE_URL: Joi.string().required(),
-        MOODLE_ADMIN_TOKEN: Joi.string().required(),
+        MOODLE_ADMIN_TOKEN: Joi.string().allow('').required(),
         BBB_URL: Joi.string().required(),
-        BBB_SECRET: Joi.string().required(),
+        BBB_SECRET: Joi.string().allow('').required(),
         METABASE_URL: Joi.string().required(),
         METABASE_SECRET_KEY: Joi.string().required(),
         JWT_SECRET: Joi.string().required(),
@@ -73,6 +82,15 @@ import { FeaturesModule } from './shared/feature-flags/features.module';
         username: configService.get<string>('DB_USER'),
         password: configService.get<string>('DB_PASS'),
         database: configService.get<string>('DB_NAME'),
+        entities: [
+          Institute,
+          RfidCard,
+          JwtRefreshToken,
+          EventOutbox,
+          QuestionBank,
+          TestAttempt,
+          LiveMeeting,
+        ],
         autoLoadEntities: true,
         synchronize:
           configService.get<string>('DB_SYNCHRONIZE') === 'true' ||

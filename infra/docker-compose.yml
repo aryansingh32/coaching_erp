@@ -183,6 +183,8 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
+    ports:
+      - "8080:3000"   # Gateway REST API — accessible at http://localhost:8080/api/v1
     deploy:
       resources:
         limits:
@@ -207,6 +209,8 @@ services:
     depends_on:
       gateway:
         condition: service_healthy
+    ports:
+      - "3001:3001"   # Next.js web — accessible at http://localhost:3001
     networks: [coaching_network]
     restart: unless-stopped
     deploy:
@@ -572,6 +576,9 @@ services:
   # ════════════════════════════════════════════════════════════════════════════
   clickhouse:
     image: clickhouse/clickhouse-server:24.3
+    depends_on:
+      minio-init:
+        condition: service_completed_successfully
     environment:
       CLICKHOUSE_DB: coaching_analytics
       CLICKHOUSE_USER: ${CLICKHOUSE_USER}
@@ -695,6 +702,21 @@ services:
         limits:
           memory: 1G
           cpus: '1'
+
+  minio-init:
+    image: minio/mc
+    depends_on:
+      minio:
+        condition: service_started
+    entrypoint: >
+      sh -c "
+      until mc alias set myminio http://minio:9000 ${MINIO_ACCESS_KEY} ${MINIO_SECRET_KEY}; do echo 'Waiting for MinIO...' && sleep 1; done;
+      mc mb -p myminio/clickhouse-cold;
+      mc mb -p myminio/lms;
+      exit 0;
+      "
+    networks: [coaching_network]
+
 
   # ════════════════════════════════════════════════════════════════════════════
   # RFID SERVICE — Lightweight RFID Punch Receiver

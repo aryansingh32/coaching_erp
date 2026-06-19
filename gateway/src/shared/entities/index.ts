@@ -4,3 +4,5 @@ export * from './jwt-refresh-token.entity';
 export * from './event-outbox.entity';
 export * from './question-bank.entity';
 export * from './test-attempt.entity';
+export * from './live-meeting.entity';
+
