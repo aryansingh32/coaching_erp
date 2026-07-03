@@ -151,6 +151,10 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
       SUPERADMIN_JWT_SECRET: ${SUPERADMIN_JWT_SECRET}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3001}
+      RFID_WEBHOOK_SECRET: ${RFID_WEBHOOK_SECRET:-}
+      ENABLE_SWAGGER: ${ENABLE_SWAGGER:-false}
+      RUN_MIGRATIONS: "true"
 
       # Redis (sessions, queues, OTP, cache)
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
@@ -201,11 +205,13 @@ services:
     build:
       context: ../web
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8080/api/v1
+        NEXT_PUBLIC_METABASE_DASHBOARD_ID: ${METABASE_DASHBOARD_ID:-1}
+        NEXT_PUBLIC_NOVU_APP_ID: ${NOVU_APP_ID:-}
     environment:
       NODE_ENV: production
       PORT: 3001
-      NEXT_PUBLIC_API_URL: https://api.${DOMAIN:-coachingos.local}
-      NEXT_PUBLIC_WS_URL: wss://api.${DOMAIN:-coachingos.local}
     depends_on:
       gateway:
         condition: service_healthy
@@ -492,6 +498,8 @@ services:
         condition: service_healthy
     networks: [coaching_network]
     restart: unless-stopped
+    ports:
+      - "8000:8000"   # ERPNext desk — http://localhost:8000 after erpnext-setup.sh
     deploy:
       resources:
         limits:

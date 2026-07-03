@@ -32,9 +32,10 @@ docker compose exec -T erpnext bash -c "
     --no-mariadb-socket || echo 'Site may already exist, continuing...'
 "
 
-echo "📦 Installing apps: erpnext → hrms → education..."
+echo "📦 Fetching and installing apps: erpnext → education..."
 docker compose exec -T erpnext bash -c "
   cd /home/frappe/frappe-bench && \
+  bench get-app education https://github.com/frappe/education --branch version-15 || echo 'education app already present' && \
   bench --site erp.coaching-internal install-app erpnext || echo 'erpnext already installed' && \
   bench --site erp.coaching-internal install-app education || echo 'education already installed'
 "

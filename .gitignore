@@ -32,6 +32,8 @@ out/
 .npm/
 .yarn/
 .pnpm-store/
+coverage/
+*.log
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 3. Environment Variables & Secrets (CRITICAL for Security)
@@ -44,8 +46,16 @@ out/
 *.env
 !*.env.example
 
+# TLS / keys — never commit real certificates
+*.pem
+*.key
+*.p12
+*.pfx
+infra/ssl/*.pem
+!infra/ssl/.gitkeep
+
 # ─────────────────────────────────────────────────────────────────────────────
-# 4. Large Media, Uploads & Assets
+# 4. Large Media, Uploads & Archives
 # ─────────────────────────────────────────────────────────────────────────────
 # BigBlueButton raw recordings and audio/video files
 *.flv
@@ -61,7 +71,8 @@ bigbluebutton/record-and-playback/core/resources/raw/
 moodledata/
 moodle/public/uploaddata/
 
-# General large files
+# Project archives / dumps (do not push multi-GB source bundles)
+coachingos_core*.zip
 *.zip
 *.tar.gz
 *.tgz
@@ -70,19 +81,22 @@ moodle/public/uploaddata/
 *.iso
 *.dmg
 
-# Parquet and Large Dataset formats
+# Generated API audit reports (regenerate locally)
+test-report-chunk*.md
+
+# Parquet and large dataset exports (keep sample CSV templates under web/public if needed)
 *.parquet
-*.csv
 *.tsv
 *.sql.gz
 *.json.gz
+# Bulk data exports only — allow small templates in web/public/samples/
+*.csv
+!web/public/**/*.csv
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 5. Service-Specific Exclusions (Source code of third-party platforms)
+# 5. Service-Specific Exclusions (third-party platform clones)
 # ─────────────────────────────────────────────────────────────────────────────
-# If you run Moodle, ClickHouse, Metabase, and Superset in Docker, 
-# you don't need their full cloned repositories tracked in Git.
-# Uncomment the lines below if you want to completely ignore their source folders:
+# Run Moodle, ClickHouse, Metabase, ERPNext, etc. via Docker images — not from git.
 clickhouse/
 moodle/
 metabase/
@@ -99,6 +113,7 @@ novu/
 Thumbs.db
 .idea/
 .vscode/
+.cursor/
 *.suo
 *.user
 *.workspace

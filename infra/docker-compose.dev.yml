@@ -1,0 +1,165 @@
+# Minimal stack for local integration testing (gateway + web + ERPNext + Education).
+# Usage:
+#   cp .env.example .env && fill secrets
+#   docker compose -f docker-compose.dev.yml up -d --build
+#   ./scripts/gen-selfsigned.sh   # optional, only if using nginx profile
+#   ./scripts/erpnext-setup.sh    # once ERPNext container is healthy
+#
+# URLs (no /etc/hosts required):
+#   Web UI:    http://localhost:3001
+#   Gateway:   http://localhost:8080/api/v1/health
+#   ERPNext:   http://localhost:8000  (site: erp.coaching-internal)
+
+version: '3.9'
+
+networks:
+  coaching_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  erpnext_data:
+  erpnext_db_data:
+  nats_data:
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: coaching_db
+      POSTGRES_USER: coaching
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-postgres.sql:/docker-entrypoint-initdb.d/init.sql
+    networks: [coaching_network]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U coaching -d coaching_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    networks: [coaching_network]
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  nats:
+    image: nats:2.10-alpine
+    command: -js -sd /data -m 8222
+    volumes:
+      - nats_data:/data
+    networks: [coaching_network]
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8222/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  erpnext-db:
+    image: mariadb:10.11
+    environment:
+      MYSQL_ROOT_PASSWORD: ${ERPNEXT_DB_ROOT_PASSWORD}
+    volumes:
+      - erpnext_db_data:/var/lib/mysql
+    networks: [coaching_network]
+    healthcheck:
+      test: ["CMD", "mariadb-admin", "ping", "-h", "localhost", "-u", "root", "-p${ERPNEXT_DB_ROOT_PASSWORD}"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  erpnext:
+    image: frappe/erpnext:v15
+    command: /home/frappe/frappe-bench/env/bin/gunicorn --bind 0.0.0.0:8000 --workers 2 --worker-class gthread frappe.app:application
+    environment:
+      DB_HOST: erpnext-db
+      DB_PORT: 3306
+      REDIS_CACHE: redis://:${REDIS_PASSWORD}@redis:6379/1
+      REDIS_QUEUE: redis://:${REDIS_PASSWORD}@redis:6379/2
+      FRAPPE_SITE_NAME_HEADER: erp.coaching-internal
+    volumes:
+      - erpnext_data:/home/frappe/frappe-bench/sites
+    depends_on:
+      erpnext-db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    networks: [coaching_network]
+
+  gateway:
+    build:
+      context: ../gateway
+      dockerfile: Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: coaching
+      DB_PASS: ${DB_PASSWORD}
+      DB_NAME: coaching_db
+      RUN_MIGRATIONS: "true"
+      DEFAULT_TENANT_ID: "00000000-0000-0000-0000-000000000001"
+      ERPNEXT_DEFAULT_COMPANY: CoachingOS
+      NATS_URL: nats://nats:4222
+      ERPNEXT_URL: http://erpnext:8000
+      ERPNEXT_API_KEY: ${ERPNEXT_API_KEY}
+      ERPNEXT_API_SECRET: ${ERPNEXT_API_SECRET}
+      MOODLE_URL: http://moodle:80
+      MOODLE_ADMIN_TOKEN: ${MOODLE_ADMIN_TOKEN:-dev}
+      BBB_URL: https://${BBB_SERVER_DOMAIN:-bbb.example.com}/bigbluebutton/api
+      BBB_SECRET: ${BBB_SECRET:-dev}
+      METABASE_URL: http://metabase:3000
+      METABASE_SECRET_KEY: ${METABASE_SECRET_KEY}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      SUPERADMIN_JWT_SECRET: ${SUPERADMIN_JWT_SECRET}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+      CORS_ORIGINS: http://localhost:3001
+      RFID_WEBHOOK_SECRET: ${RFID_WEBHOOK_SECRET:-}
+      ENABLE_SWAGGER: "true"
+      OTP_DEV_CODE: ${OTP_DEV_CODE:-123456}
+      SUPER_ADMIN_PHONES: ${SUPER_ADMIN_PHONES:-9999999999}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+    ports:
+      - "8080:3000"
+    networks: [coaching_network]
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+
+  web:
+    build:
+      context: ../web
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8080/api/v1
+        NEXT_PUBLIC_METABASE_DASHBOARD_ID: ${METABASE_DASHBOARD_ID:-1}
+        NEXT_PUBLIC_NOVU_APP_ID: ${NOVU_APP_ID:-}
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+    depends_on:
+      gateway:
+        condition: service_healthy
+    ports:
+      - "3001:3001"
+    networks: [coaching_network]
