@@ -10,15 +10,19 @@ interface AuthState {
   erpId: string | null
   displayName: string | null
   role: MobileRole
+  linkedStudents: string[]
+  activeStudentId: string | null
   login: (params: {
     accessToken: string
     refreshToken: string
     erpId: string
     displayName: string
     role: MobileRole
+    linkedStudents?: string[]
   }) => Promise<void>
   logout: () => Promise<void>
   hydrate: () => Promise<void>
+  setActiveStudent: (studentId: string) => void
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -28,13 +32,30 @@ export const useAuthStore = create<AuthState>((set) => ({
   erpId: null,
   displayName: null,
   role: null,
+  linkedStudents: [],
+  activeStudentId: null,
 
-  login: async ({ accessToken, refreshToken, erpId, displayName, role }) => {
+  login: async ({ accessToken, refreshToken, erpId, displayName, role, linkedStudents }) => {
     await SecureStore.setItemAsync('accessToken', accessToken)
     await SecureStore.setItemAsync('refreshToken', refreshToken)
     await SecureStore.setItemAsync('role', role ?? '')
     await SecureStore.setItemAsync('erpId', erpId)
-    set({ isAuthenticated: true, accessToken, refreshToken, erpId, displayName, role })
+    
+    if (linkedStudents && linkedStudents.length > 0) {
+      await SecureStore.setItemAsync('linkedStudents', JSON.stringify(linkedStudents))
+      await SecureStore.setItemAsync('activeStudentId', linkedStudents[0])
+    }
+    
+    set({ 
+      isAuthenticated: true, 
+      accessToken, 
+      refreshToken, 
+      erpId, 
+      displayName, 
+      role,
+      linkedStudents: linkedStudents || [],
+      activeStudentId: linkedStudents && linkedStudents.length > 0 ? linkedStudents[0] : erpId
+    })
   },
 
   logout: async () => {
@@ -42,6 +63,8 @@ export const useAuthStore = create<AuthState>((set) => ({
     await SecureStore.deleteItemAsync('refreshToken')
     await SecureStore.deleteItemAsync('role')
     await SecureStore.deleteItemAsync('erpId')
+    await SecureStore.deleteItemAsync('linkedStudents')
+    await SecureStore.deleteItemAsync('activeStudentId')
     set({
       isAuthenticated: false,
       accessToken: null,
@@ -49,6 +72,8 @@ export const useAuthStore = create<AuthState>((set) => ({
       erpId: null,
       displayName: null,
       role: null,
+      linkedStudents: [],
+      activeStudentId: null
     })
   },
 
@@ -57,8 +82,28 @@ export const useAuthStore = create<AuthState>((set) => ({
     const refreshToken = await SecureStore.getItemAsync('refreshToken')
     const role = (await SecureStore.getItemAsync('role')) as MobileRole
     const erpId = await SecureStore.getItemAsync('erpId')
+    
+    const linkedStudentsStr = await SecureStore.getItemAsync('linkedStudents')
+    const activeStudentIdStr = await SecureStore.getItemAsync('activeStudentId')
+    
+    const linkedStudents = linkedStudentsStr ? JSON.parse(linkedStudentsStr) : []
+    const activeStudentId = activeStudentIdStr || erpId
+    
     if (accessToken && role) {
-      set({ isAuthenticated: true, accessToken, refreshToken, role, erpId })
+      set({ 
+        isAuthenticated: true, 
+        accessToken, 
+        refreshToken, 
+        role, 
+        erpId,
+        linkedStudents,
+        activeStudentId
+      })
     }
   },
+
+  setActiveStudent: (studentId: string) => {
+    SecureStore.setItemAsync('activeStudentId', studentId)
+    set({ activeStudentId: studentId })
+  }
 }))

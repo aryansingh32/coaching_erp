@@ -11,11 +11,13 @@ import { RolesGuard } from './guards/roles.guard';
 import { ErpnextModule } from '../../adapters/erpnext/erpnext.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Institute } from '../../shared/entities/institute.entity';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
   imports: [
     PassportModule,
     CacheModule.register(),
+    HttpModule,
     TypeOrmModule.forFeature([Institute]),
     JwtModule.registerAsync({
       imports: [ConfigModule],

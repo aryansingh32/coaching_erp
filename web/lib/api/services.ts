@@ -107,6 +107,12 @@ export async function assignInstructor(batchId: string, instructorId: string) {
   return apiPost(`/batches/${batchId}/instructors`, { instructorId })
 }
 
+export async function getBatchStudents(batchId: string) {
+  return apiGet<Array<{ student: string; student_name?: string; group_roll_number?: string }>>(
+    `/batches/${encodeURIComponent(batchId)}/students`,
+  )
+}
+
 // ─── Attendance ─────────────────────────────────────────────────────────────
 
 export async function markManualAttendance(data: {
@@ -230,6 +236,41 @@ export async function applyLeave(studentId: string, data: {
   return apiPost(`/education/students/${encodeURIComponent(studentId)}/leave`, data)
 }
 
+export async function listLeaveRequests() {
+  return apiGet<import('./types').LeaveRequest[]>('/education/leave-requests')
+}
+
+export async function updateLeaveRequest(id: string, status: 'Approved' | 'Rejected') {
+  return apiPut(`/education/leave-requests/${encodeURIComponent(id)}`, { status })
+}
+
+export async function listInstructors() {
+  return apiGet<import('./types').Instructor[]>('/education/instructors')
+}
+
+export async function createInstructor(data: {
+  instructor_name: string
+  cell_number?: string
+  email_address?: string
+}) {
+  return apiPost('/education/instructors', data)
+}
+
+export async function deactivateInstructor(id: string) {
+  return apiPut(`/education/instructors/${encodeURIComponent(id)}`, {})
+}
+
+export async function createAssessmentResult(data: {
+  student: string
+  assessment_plan: string
+  program: string
+  course: string
+  total_score: number
+  maximum_score: number
+}) {
+  return apiPost('/education/assessment-results', data)
+}
+
 // ─── Live Class (BBB) ───────────────────────────────────────────────────────
 
 export async function createLiveClass(batchId: string, name: string) {
@@ -249,6 +290,12 @@ export async function listLiveClasses(batchId?: string) {
 
 export async function endLiveClass(meetingId: string) {
   return apiDelete(`/live-class/${encodeURIComponent(meetingId)}`)
+}
+
+export async function getMeetingRecordings(meetingId: string) {
+  return apiGet<{ recordings?: { recording?: import('./types').Recording | import('./types').Recording[] } }>(
+    `/live-class/${encodeURIComponent(meetingId)}/recordings`,
+  )
 }
 
 // ─── Fees / Razorpay ────────────────────────────────────────────────────────
@@ -302,11 +349,31 @@ export async function updateTenantFeatures(tenantId: string, features: Record<st
 // ─── Tests (Moodle) ─────────────────────────────────────────────────────────
 
 export async function listTests(courseIds: number[]) {
-  return apiGet<unknown[]>('/tests', { params: { courseIds: courseIds.join(',') } })
+  return apiGet<import('./types').MoodleQuiz[]>('/tests', { params: { courseIds: courseIds.join(',') } })
 }
 
 export async function startTestAttempt(quizId: number, userId?: number) {
-  return apiPost(`/tests/${quizId}/attempt/start`, { userId })
+  return apiPost<{ attempt: { id: number } }>(`/tests/${quizId}/attempt/start`, { userId })
+}
+
+export async function getAttemptData(attemptId: number, page?: number) {
+  return apiGet<import('./types').QuizAttemptData>(`/tests/attempt/${attemptId}/data`, {
+    params: page !== undefined ? { page } : undefined,
+  })
+}
+
+export async function getAttemptReview(attemptId: number, page?: number) {
+  return apiGet<import('./types').QuizReview>(`/tests/attempt/${attemptId}/review`, {
+    params: page !== undefined ? { page } : undefined,
+  })
+}
+
+export async function submitTestAttempt(attemptId: number, answers: Record<string, string>) {
+  return apiPost(`/tests/attempt/${attemptId}/submit`, { answers })
+}
+
+export async function createQuiz(data: { courseId: number; name: string; intro?: string }) {
+  return apiPost<{ id?: number }>('/tests/quizzes', data)
 }
 
 // ─── LMS (Moodle) ───────────────────────────────────────────────────────────
@@ -315,8 +382,23 @@ export async function listLmsCourses() {
   return apiGet<unknown[]>('/lms/courses')
 }
 
+export async function createLmsCourse(data: { fullname: string; shortname: string; categoryid?: number }) {
+  return apiPost<{ id?: number }>('/lms/courses', data)
+}
+
 export async function getLmsCourseContent(courseId: number) {
   return apiGet<unknown>(`/lms/courses/${courseId}/content`)
+}
+
+export async function addLmsCourseContent(
+  courseId: number,
+  data: { name: string; externalurl?: string; filename?: string; filecontentBase64?: string },
+) {
+  return apiPost(`/lms/courses/${courseId}/content`, data)
+}
+
+export async function getLmsCourseGrades(courseId: number, userId: number) {
+  return apiGet<unknown>(`/lms/courses/${courseId}/grades`, { params: { userId } })
 }
 
 // ─── Super Admin ────────────────────────────────────────────────────────────
@@ -349,6 +431,26 @@ export async function proxyErpList(doctype: string, filters?: string, fields?: s
   return apiGet<unknown[]>(`/proxy/erp/${encodeURIComponent(doctype)}`, { params: { filters, fields } })
 }
 
+export async function proxyErpGet(doctype: string, name: string) {
+  return apiGet<unknown>(`/proxy/erp/${encodeURIComponent(doctype)}/${encodeURIComponent(name)}`)
+}
+
+export async function proxyErpCreate(doctype: string, data: Record<string, unknown>) {
+  return apiPost<unknown>(`/proxy/erp/${encodeURIComponent(doctype)}`, data)
+}
+
+export async function proxyErpUpdate(doctype: string, name: string, data: Record<string, unknown>) {
+  return apiPut<unknown>(`/proxy/erp/${encodeURIComponent(doctype)}/${encodeURIComponent(name)}`, data)
+}
+
+export async function proxyErpMethod(method: string, data?: Record<string, unknown>) {
+  return apiPost<unknown>('/proxy/erp/method', { method, data })
+}
+
 export async function proxyMoodleCall(wsFunction: string, params?: Record<string, unknown>) {
   return apiPost<unknown>('/proxy/moodle/call', { wsFunction, params })
+}
+
+export async function getAuthFeatures() {
+  return apiGet<Record<string, boolean>>('/auth/features')
 }

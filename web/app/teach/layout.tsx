@@ -2,24 +2,52 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { LayoutDashboard, Users, ClipboardCheck, LogOut, Video } from "lucide-react"
+import { LayoutDashboard, Users, ClipboardCheck, LogOut, Video, Film, BookOpen, ClipboardList, MessageSquare, Radio } from "lucide-react"
 import { AuthGuard } from "@/components/auth/auth-guard"
 import { useAuthStore } from "@/lib/stores/auth-store"
 import { useFeatureEnabled } from "@/lib/features"
 
-const navItems = [
+type TeachNavItem = {
+  href: string
+  label: string
+  icon: typeof LayoutDashboard
+  feature?: 'live_classes' | 'recordings' | 'moodle_lms' | 'online_tests' | 'grades' | 'communication' | 'attendance_rfid'
+}
+
+const navItems: TeachNavItem[] = [
   { href: '/teach', label: "Today's Schedule", icon: LayoutDashboard },
   { href: '/teach/batches', label: 'My Batches', icon: Users },
   { href: '/teach/attendance', label: 'Mark Attendance', icon: ClipboardCheck },
-  { href: '/teach/live-class', label: 'Live Classes', icon: Video, feature: 'live_classes' as const },
+  { href: '/teach/attendance-rfid', label: 'RFID Feed', icon: Radio, feature: 'attendance_rfid' },
+  { href: '/teach/courses', label: 'Courses', icon: BookOpen, feature: 'moodle_lms' },
+  { href: '/teach/tests', label: 'Quiz Builder', icon: ClipboardList, feature: 'online_tests' },
+  { href: '/teach/assessments', label: 'Grades', icon: ClipboardCheck, feature: 'grades' },
+  { href: '/teach/live-class', label: 'Live Classes', icon: Video, feature: 'live_classes' },
+  { href: '/teach/recordings', label: 'Recordings', icon: Film, feature: 'recordings' },
+  { href: '/teach/communication', label: 'Communication', icon: MessageSquare, feature: 'communication' },
 ]
 
 export default function TeachLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const { displayName, logout } = useAuthStore()
   const liveClassesEnabled = useFeatureEnabled('live_classes')
+  const recordingsEnabled = useFeatureEnabled('recordings')
+  const moodleEnabled = useFeatureEnabled('moodle_lms')
+  const testsEnabled = useFeatureEnabled('online_tests')
+  const gradesEnabled = useFeatureEnabled('grades')
+  const commEnabled = useFeatureEnabled('communication')
+  const rfidEnabled = useFeatureEnabled('attendance_rfid')
 
-  const visibleNav = navItems.filter((item) => !item.feature || (item.feature === 'live_classes' && liveClassesEnabled))
+  const visibleNav = navItems.filter((item) => {
+    if (item.feature === 'live_classes') return liveClassesEnabled
+    if (item.feature === 'recordings') return recordingsEnabled
+    if (item.feature === 'moodle_lms') return moodleEnabled
+    if (item.feature === 'online_tests') return testsEnabled
+    if (item.feature === 'grades') return gradesEnabled
+    if (item.feature === 'communication') return commEnabled
+    if (item.feature === 'attendance_rfid') return rfidEnabled
+    return true
+  })
 
   const handleLogout = () => {
     logout()

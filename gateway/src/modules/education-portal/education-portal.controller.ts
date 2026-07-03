@@ -1,9 +1,10 @@
-import { Controller, Get, Post, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Put, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { EducationPortalService } from './education-portal.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { FeatureGuard, RequireFeature } from '../../shared/feature-flags/features';
 
 @ApiTags('Education Portal')
 @ApiBearerAuth()
@@ -65,5 +66,65 @@ export class EducationPortalController {
     @Request() req: any,
   ) {
     return this.portalService.applyLeave({ ...body, student: studentId }, req.user);
+  }
+
+  @Get('leave-requests')
+  @Roles('admin')
+  @ApiOperation({ summary: 'List leave applications for institute' })
+  leaveRequests(@Request() req: any) {
+    return this.portalService.listLeaveRequests(req.user.tenantId);
+  }
+
+  @Put('leave-requests/:id')
+  @Roles('admin')
+  @ApiOperation({ summary: 'Approve or reject leave application' })
+  updateLeave(
+    @Param('id') id: string,
+    @Body() body: { status: 'Approved' | 'Rejected' },
+    @Request() req: any,
+  ) {
+    return this.portalService.updateLeaveRequest(id, body.status, req.user.tenantId);
+  }
+
+  @Get('instructors')
+  @Roles('admin')
+  @ApiOperation({ summary: 'List all instructors for institute' })
+  instructors(@Request() req: any) {
+    return this.portalService.listInstructors(req.user.tenantId);
+  }
+
+  @Post('instructors')
+  @Roles('admin')
+  @ApiOperation({ summary: 'Create instructor' })
+  createInstructor(
+    @Request() req: any,
+    @Body() body: { instructor_name: string; cell_number?: string; email_address?: string },
+  ) {
+    return this.portalService.createInstructor(body, req.user.tenantId);
+  }
+
+  @Put('instructors/:id')
+  @Roles('admin')
+  @ApiOperation({ summary: 'Deactivate instructor' })
+  deactivateInstructor(@Param('id') id: string, @Request() req: any) {
+    return this.portalService.deactivateInstructor(id, req.user.tenantId);
+  }
+
+  @Post('assessment-results')
+  @UseGuards(FeatureGuard)
+  @RequireFeature('grades')
+  @Roles('admin', 'instructor')
+  @ApiOperation({ summary: 'Create assessment result (grade entry)' })
+  createAssessmentResult(
+    @Body() body: {
+      student: string;
+      assessment_plan: string;
+      program: string;
+      course: string;
+      total_score: number;
+      maximum_score: number;
+    },
+  ) {
+    return this.portalService.createAssessmentResult(body);
   }
 }

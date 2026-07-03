@@ -1,26 +1,62 @@
 "use client"
 
 import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { Home, BookOpen, Clock, User, LogOut } from "lucide-react"
+import { usePathname, useRouter } from "next/navigation"
+import {
+  Home, BookOpen, Clock, User, LogOut, ClipboardList, CalendarDays,
+  IndianRupee, Video,
+} from "lucide-react"
 import { AuthGuard } from "@/components/auth/auth-guard"
 import { useAuthStore } from "@/lib/stores/auth-store"
+import { useFeatureEnabled } from "@/lib/features"
+import { NovuNotificationBell } from "@/components/notifications/novu-bell"
+import type { LucideIcon } from "lucide-react"
 
-const navItems = [
+type NavItem = {
+  href: string
+  label: string
+  icon: LucideIcon
+  feature?: 'online_tests' | 'recordings'
+}
+
+const studentNavItems: NavItem[] = [
   { href: '/learn', label: 'Home', icon: Home },
   { href: '/learn/courses', label: 'Courses', icon: BookOpen },
+  { href: '/learn/tests', label: 'Tests', icon: ClipboardList, feature: 'online_tests' as const },
+  { href: '/learn/schedule', label: 'Schedule', icon: CalendarDays },
   { href: '/learn/timeline', label: 'Timeline', icon: Clock },
+  { href: '/learn/recordings', label: 'Recordings', icon: Video, feature: 'recordings' as const },
   { href: '/learn/profile', label: 'Profile', icon: User },
+]
+
+const parentNavItems: NavItem[] = [
+  { href: '/learn', label: 'Home', icon: Home },
+  { href: '/learn/attendance', label: 'Attendance', icon: CalendarDays },
+  { href: '/learn/profile', label: 'Fees & Profile', icon: IndianRupee },
+  { href: '/learn/timeline', label: 'Timeline', icon: Clock },
 ]
 
 export default function LearnLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
-  const { displayName, logout } = useAuthStore()
+  const pathname = usePathname()
+  const { displayName, logout, role } = useAuthStore()
+  const onlineTestsEnabled = useFeatureEnabled('online_tests')
+  const recordingsEnabled = useFeatureEnabled('recordings')
+  const notificationsEnabled = useFeatureEnabled('notifications')
 
   const handleLogout = () => {
     logout()
     router.push('/login')
   }
+
+  const baseNav = role === 'parent' ? parentNavItems : studentNavItems
+  const navItems = baseNav.filter((item) => {
+    if (item.feature === 'online_tests') return onlineTestsEnabled
+    if (item.feature === 'recordings') return recordingsEnabled
+    return true
+  })
+
+  const portalLabel = role === 'parent' ? 'Parent Portal' : 'Student Portal'
 
   return (
     <AuthGuard allowedRoles={['student', 'parent']}>
@@ -28,9 +64,13 @@ export default function LearnLayout({ children }: { children: React.ReactNode })
         <nav className="md:hidden fixed bottom-0 w-full bg-card border-t border-border flex justify-around items-center h-16 z-50">
           {navItems.map((item) => (
             <Link
-              key={item.href}
+              key={`${item.href}-${item.label}`}
               href={item.href}
-              className="flex flex-col items-center text-muted-foreground hover:text-primary transition-colors"
+              className={`flex flex-col items-center transition-colors ${
+                pathname === item.href || (item.href !== '/learn' && pathname.startsWith(item.href))
+                  ? 'text-primary'
+                  : 'text-muted-foreground hover:text-primary'
+              }`}
             >
               <item.icon className="w-5 h-5 mb-1" />
               <span className="text-[10px]">{item.label}</span>
@@ -44,7 +84,7 @@ export default function LearnLayout({ children }: { children: React.ReactNode })
               {displayName?.[0] ?? 'S'}
             </div>
             <div>
-              <span className="text-xl font-bold tracking-tight block">Student Portal</span>
+              <span className="text-xl font-bold tracking-tight block">{portalLabel}</span>
               <span className="text-xs text-muted-foreground">{displayName}</span>
             </div>
           </div>
@@ -52,9 +92,13 @@ export default function LearnLayout({ children }: { children: React.ReactNode })
           <nav className="flex-1 space-y-2">
             {navItems.map((item) => (
               <Link
-                key={item.href}
+                key={`${item.href}-${item.label}`}
                 href={item.href}
-                className="flex items-center space-x-3 px-3 py-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
+                className={`flex items-center space-x-3 px-3 py-2 rounded-md transition-colors ${
+                  pathname === item.href || (item.href !== '/learn' && pathname.startsWith(item.href))
+                    ? 'text-foreground bg-accent/50'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+                }`}
               >
                 <item.icon className="w-4 h-4" />
                 <span>{item.label}</span>
@@ -72,6 +116,11 @@ export default function LearnLayout({ children }: { children: React.ReactNode })
         </aside>
 
         <main className="flex-1 p-6 pb-24 md:pb-6 overflow-y-auto">
+          {notificationsEnabled && (
+            <div className="max-w-5xl mx-auto flex justify-end mb-4">
+              <NovuNotificationBell />
+            </div>
+          )}
           <div className="max-w-5xl mx-auto">
             {children}
           </div>

@@ -57,7 +57,15 @@ async function bootstrap() {
         
         if (msg.subject === 'attendance.rfid_punch') {
            console.log(`Sending SMS to parents of ${payload.erpId}`);
-           // await novu.trigger('attendance-punch', { to: { subscriberId: payload.erpId }, payload });
+           await novu.trigger('attendance-punch', {
+             to: { subscriberId: payload.erpId },
+             payload: {
+               studentName: payload.studentName || 'Student',
+               time: new Date(payload.timestamp).toLocaleTimeString('en-IN'),
+               instituteName: payload.instituteName || 'Institute',
+               punchType: payload.punchType
+             }
+           });
         }
         
         msg.ack();

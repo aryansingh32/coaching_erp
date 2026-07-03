@@ -5,7 +5,7 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import {
   LayoutDashboard, Building2, Activity, LogOut, Menu,
-  ScrollText, Network, BarChart3, Shield,
+  ScrollText, Network, BarChart3, Shield, ToggleLeft,
 } from "lucide-react"
 import { AuthGuard } from "@/components/auth/auth-guard"
 import { cn } from "@/lib/utils"
@@ -15,8 +15,10 @@ import { useAuthStore } from "@/lib/stores/auth-store"
 const navigation = [
   { name: "Command Center", href: "/superadmin/dashboard", icon: LayoutDashboard },
   { name: "Tenants", href: "/superadmin/tenants", icon: Building2 },
+  { name: "Plans & Features", href: "/superadmin/plans", icon: ToggleLeft },
   { name: "Analytics", href: "/superadmin/analytics", icon: BarChart3 },
   { name: "Audit Logs", href: "/superadmin/audit-logs", icon: ScrollText },
+  // Notifications hidden until gateway Novu logs module exists (currently mock data)
   { name: "API Proxy", href: "/superadmin/proxy", icon: Network },
   { name: "System Health", href: "/superadmin/health", icon: Activity },
   { name: "Security", href: "/superadmin/security", icon: Shield },

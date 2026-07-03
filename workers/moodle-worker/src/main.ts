@@ -88,9 +88,14 @@ async function bootstrap() {
         console.log(`Received ${msg.subject}:`, payload);
         
         if (msg.subject === 'student.created') {
-           // Create Moodle user
            console.log(`Creating Moodle user for ${payload.erpId}`);
-           // moodle.call('core_user_create_users', { ... })
+           await moodle.call('core_user_create_users', {
+             'users[0][username]': (payload.erpId || payload.name).toLowerCase(),
+             'users[0][password]': 'Changeme@123',
+             'users[0][firstname]': payload.first_name || 'Student',
+             'users[0][lastname]': payload.last_name || payload.erpId || payload.name,
+             'users[0][email]': payload.student_email_id || `${payload.erpId || payload.name}@example.com`,
+           });
         }
         
         msg.ack();
@@ -119,7 +124,11 @@ async function bootstrap() {
         
         if (msg.subject === 'batch.created') {
            console.log(`Creating Moodle course for ${payload.batchName}`);
-           // moodle.call('core_course_create_courses', { ... })
+           await moodle.call('core_course_create_courses', {
+             'courses[0][fullname]': payload.batchName || payload.name,
+             'courses[0][shortname]': payload.batchName || payload.name,
+             'courses[0][categoryid]': 1,
+           });
         }
         
         msg.ack();

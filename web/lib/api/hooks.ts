@@ -265,6 +265,48 @@ export function useTests(courseIds: number[]) {
   })
 }
 
+export function useStartAttempt() {
+  return useMutation({
+    mutationFn: ({ quizId, userId }: { quizId: number; userId?: number }) =>
+      api.startTestAttempt(quizId, userId),
+  })
+}
+
+export function useAttemptData(attemptId: number) {
+  return useQuery({
+    queryKey: queryKeys.testsAttempt(attemptId),
+    queryFn: () => api.getAttemptData(attemptId),
+    enabled: attemptId > 0,
+  })
+}
+
+export function useAttemptReview(attemptId: number) {
+  return useQuery({
+    queryKey: queryKeys.testsReview(attemptId),
+    queryFn: () => api.getAttemptReview(attemptId),
+    enabled: attemptId > 0,
+  })
+}
+
+export function useSubmitAttempt() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ attemptId, answers }: { attemptId: number; answers: Record<string, string> }) =>
+      api.submitTestAttempt(attemptId, answers),
+    onSuccess: (_, { attemptId }) => {
+      qc.invalidateQueries({ queryKey: queryKeys.testsReview(attemptId) })
+    },
+  })
+}
+
+export function useMeetingRecordings(meetingId: string) {
+  return useQuery({
+    queryKey: queryKeys.recordings(meetingId),
+    queryFn: () => api.getMeetingRecordings(meetingId),
+    enabled: !!meetingId,
+  })
+}
+
 export function useLmsCourses() {
   return useQuery({
     queryKey: queryKeys.lms.courses,
@@ -367,6 +409,92 @@ export function useApplyLeave() {
       studentId: string
       data: Parameters<typeof api.applyLeave>[1]
     }) => api.applyLeave(studentId, data),
+  })
+}
+
+export function useLeaveRequests() {
+  return useQuery({
+    queryKey: queryKeys.education.leaveRequests,
+    queryFn: api.listLeaveRequests,
+  })
+}
+
+export function useUpdateLeaveRequest() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, status }: { id: string; status: 'Approved' | 'Rejected' }) =>
+      api.updateLeaveRequest(id, status),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.education.leaveRequests }),
+  })
+}
+
+export function useInstructors() {
+  return useQuery({
+    queryKey: queryKeys.education.instructors,
+    queryFn: api.listInstructors,
+  })
+}
+
+export function useCreateAssessmentResult() {
+  return useMutation({
+    mutationFn: api.createAssessmentResult,
+  })
+}
+
+export function useCreateLmsCourse() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: api.createLmsCourse,
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.lms.courses }),
+  })
+}
+
+export function useAddLmsCourseContent(courseId: number) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data: Parameters<typeof api.addLmsCourseContent>[1]) =>
+      api.addLmsCourseContent(courseId, data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.lms.content(courseId) }),
+  })
+}
+
+export function useCreateQuiz() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: api.createQuiz,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['tests'] }),
+  })
+}
+
+export function useBatchStudents(batchId: string) {
+  return useQuery({
+    queryKey: queryKeys.batches.students(batchId),
+    queryFn: () => api.getBatchStudents(batchId),
+    enabled: !!batchId,
+  })
+}
+
+export function useCreateInstructor() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: api.createInstructor,
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.education.instructors }),
+  })
+}
+
+export function useDeactivateInstructor() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: api.deactivateInstructor,
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.education.instructors }),
+  })
+}
+
+export function useStudentAttendanceCalendar(studentId: string, studentGroup: string) {
+  return useQuery({
+    queryKey: queryKeys.education.attendance(studentId, studentGroup),
+    queryFn: () => api.getStudentAttendanceCalendar(studentId, studentGroup),
+    enabled: !!studentId && !!studentGroup,
   })
 }
 

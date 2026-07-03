@@ -1,10 +1,30 @@
 import { useQuery } from '@tanstack/react-query'
 import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native'
-import { listBatches, getPendingFees } from '@/lib/api'
+import { listBatches, getPendingFees, updatePushToken } from '@/lib/api'
 import { useAuthStore } from '@/lib/auth-store'
+import { useEffect } from 'react'
+import { registerForPushNotificationsAsync } from '@/lib/notifications'
 
 export default function StudentHome() {
-  const { erpId, displayName, logout } = useAuthStore()
+  const { erpId, activeStudentId, displayName, logout } = useAuthStore()
+
+  useEffect(() => {
+    async function setupPushNotifications() {
+      try {
+        const token = await registerForPushNotificationsAsync()
+        const targetId = activeStudentId || erpId
+        if (token && targetId) {
+          await updatePushToken(targetId, token)
+        }
+      } catch (e) {
+        console.error('Failed to setup push notifications', e)
+      }
+    }
+    
+    if (activeStudentId || erpId) {
+      setupPushNotifications()
+    }
+  }, [activeStudentId, erpId])
 
   const { data: batchesRes } = useQuery({
     queryKey: ['batches'],

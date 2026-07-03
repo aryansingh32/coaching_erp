@@ -24,6 +24,17 @@ async function bootstrap() {
     process.exit(1);
   }
 
+  // Ensure attendance_events table exists
+  await pgPool.query(`
+    CREATE TABLE IF NOT EXISTS attendance_events (
+      id SERIAL PRIMARY KEY,
+      erp_student_id VARCHAR(255) NOT NULL,
+      institute_id VARCHAR(255) NOT NULL,
+      punch_type VARCHAR(50) NOT NULL,
+      punched_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
   const js = nc.jetstream();
 
   // Connect to MQTT broker
@@ -57,17 +68,35 @@ async function bootstrap() {
         
         const { erp_student_id, institute_id } = result.rows[0];
         
+        // Determine entry vs exit by checking last punch in DB
+        const lastPunch = await pgPool.query(
+          `SELECT punch_type FROM attendance_events 
+           WHERE erp_student_id = $1 AND institute_id = $2 
+           AND punched_at > NOW() - INTERVAL '8 hours'
+           ORDER BY punched_at DESC LIMIT 1`,
+          [erp_student_id, institute_id]
+        );
+
+        const lastPunchType = lastPunch.rows[0]?.punch_type;
+        const punchType = lastPunchType === 'entry' ? 'exit' : 'entry';
+
+        await pgPool.query(
+          `INSERT INTO attendance_events (erp_student_id, institute_id, punch_type, punched_at) 
+           VALUES ($1, $2, $3, NOW())`,
+          [erp_student_id, institute_id, punchType]
+        );
+        
         // Publish to NATS
         const event = {
           erpId: erp_student_id,
           instituteId: institute_id,
           readerId,
           timestamp: new Date().toISOString(),
-          punchType: 'entry' // Logic to determine entry/exit can be added
+          punchType
         };
         
         await js.publish('attendance.rfid_punch', sc.encode(JSON.stringify(event)));
-        console.log(`Published attendance event for ${erp_student_id}`);
+        console.log(`Published attendance event for ${erp_student_id} (${punchType})`);
         
       } catch (err) {
         console.error('Error processing MQTT message', err);

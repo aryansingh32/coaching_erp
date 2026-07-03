@@ -8,6 +8,7 @@ export const queryKeys = {
   batches: {
     all: ['batches'] as const,
     detail: (id: string) => ['batches', id] as const,
+    students: (id: string) => ['batches', id, 'students'] as const,
   },
   attendance: {
     reports: (batchId: string, start: string, end: string) =>
@@ -36,10 +37,16 @@ export const queryKeys = {
     invoices: (id: string) => ['education', 'invoices', id] as const,
     programs: (id: string) => ['education', 'programs', id] as const,
     grades: (id: string, program: string) => ['education', 'grades', id, program] as const,
+    leaveRequests: ['education', 'leave-requests'] as const,
+    instructors: ['education', 'instructors'] as const,
   },
   tests: (courseIds: number[]) => ['tests', courseIds.join(',')] as const,
+  testsAttempt: (attemptId: number) => ['tests', 'attempt', attemptId] as const,
+  testsReview: (attemptId: number) => ['tests', 'review', attemptId] as const,
+  recordings: (meetingId: string) => ['recordings', meetingId] as const,
   lms: {
     courses: ['lms', 'courses'] as const,
+    content: (id: number) => ['lms', 'courses', id, 'content'] as const,
   },
   superadmin: {
     stats: ['superadmin', 'stats'] as const,

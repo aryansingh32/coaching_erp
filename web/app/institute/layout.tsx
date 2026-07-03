@@ -14,6 +14,12 @@ import {
   Settings,
   Menu,
   LogOut,
+  Video,
+  UserCog,
+  ClipboardList,
+  Upload,
+  Film,
+  Code,
 } from "lucide-react"
 import { AuthGuard } from "@/components/auth/auth-guard"
 import { useAuthStore } from "@/lib/stores/auth-store"
@@ -26,12 +32,20 @@ import { useFeatures, INSTITUTE_NAV_FEATURES } from "@/lib/features"
 const sidebarNavigation = [
   { name: "Dashboard", href: "/institute/dashboard", icon: LayoutDashboard },
   { name: "Students", href: "/institute/students", icon: Users },
+  { name: "Import Students", href: "/institute/students/import", icon: Upload },
+  { name: "Staff", href: "/institute/staff", icon: UserCog },
   { name: "Batches", href: "/institute/batches", icon: BookOpen },
+  { name: "Courses", href: "/institute/courses", icon: BookOpen },
+  { name: "Live Classes", href: "/institute/live-classes", icon: Video },
+  { name: "Recordings", href: "/institute/recordings", icon: Film },
   { name: "Schedule", href: "/institute/schedule", icon: CalendarDays },
   { name: "Attendance", href: "/institute/attendance", icon: CalendarDays },
+  { name: "Leave Requests", href: "/institute/leave-requests", icon: ClipboardList },
   { name: "Grades", href: "/institute/grades", icon: BarChart3 },
   { name: "Finance", href: "/institute/finance", icon: CreditCard },
   { name: "Exams", href: "/institute/exams", icon: BookOpen },
+  { name: "Communication", href: "/institute/communication", icon: Bell },
+  { name: "API Explorer", href: "/institute/developer", icon: Code },
   { name: "Settings", href: "/institute/settings", icon: Settings },
 ]
 

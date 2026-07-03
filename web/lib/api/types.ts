@@ -108,3 +108,67 @@ export interface HealthStatus {
 export interface DashboardEmbed {
   url: string
 }
+
+export interface MoodleQuiz {
+  id: number
+  name: string
+  course?: number
+  courseid?: number
+  timelimit?: number
+  grade?: number
+  intro?: string
+}
+
+export interface QuizQuestion {
+  slot: number
+  type: string
+  html: string
+  page: number
+  number?: number
+  answernumbering?: string
+}
+
+export interface QuizAttemptData {
+  attempt: { id: number; quiz: number; timestart?: number; timefinish?: number; state?: string }
+  questions: QuizQuestion[]
+  warnings?: unknown[]
+}
+
+export interface QuizReview {
+  grade?: number
+  attempt?: { sumgrades?: number; state?: string }
+  questions?: Array<{
+    slot: number
+    type: string
+    html: string
+    mark?: number
+    maxmark?: number
+    state?: string
+  }>
+}
+
+export interface Recording {
+  recordID: string
+  meetingID: string
+  name: string
+  published: boolean
+  playback?: { format: { type: string; url: string } | Array<{ type: string; url: string }> }
+}
+
+export interface LeaveRequest {
+  name: string
+  student: string
+  from_date: string
+  to_date: string
+  reason?: string
+  student_group?: string
+  status?: string
+}
+
+export interface Instructor {
+  name: string
+  instructor_name: string
+  cell_number?: string
+  email_address?: string
+  status?: string
+}

@@ -3,6 +3,8 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
+import { HttpService } from '@nestjs/axios';
+import { firstValueFrom } from 'rxjs';
 import { EducationAdapter } from '../../adapters/erpnext/education.adapter';
 import { FeaturesService } from '../../shared/feature-flags/features.service';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -19,6 +21,7 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly erpAdapter: EducationAdapter,
     private readonly featuresService: FeaturesService,
+    private readonly httpService: HttpService,
     @InjectRepository(Institute) private readonly instituteRepo: Repository<Institute>,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
@@ -50,10 +53,33 @@ export class AuthService {
       }
     }
 
-    const otp = this.configService.get<string>('OTP_DEV_CODE') || '123456';
+    const actualOtp = this.configService.get<string>('NODE_ENV') === 'production'
+      ? Math.floor(100000 + Math.random() * 900000).toString()
+      : (this.configService.get<string>('OTP_DEV_CODE') || '123456');
+
     const cacheKey = `otp:${phone}:${role}`;
-    await this.cacheManager.set(cacheKey, otp, 300);
-    this.logger.log(`OTP sent to ${phone} for role ${role}`);
+    await this.cacheManager.set(cacheKey, actualOtp, 300);
+    this.logger.log(`OTP generated for ${phone} role ${role}`);
+
+    if (this.configService.get<string>('NODE_ENV') === 'production') {
+      try {
+        const msg91AuthKey = this.configService.get<string>('MSG91_AUTH_KEY');
+        const templateId = this.configService.get<string>('MSG91_OTP_TEMPLATE_ID');
+        if (msg91AuthKey && templateId) {
+          await firstValueFrom(this.httpService.post(
+            'https://api.msg91.com/api/v5/otp',
+            { template_id: templateId, mobile: phone, otp: actualOtp },
+            { headers: { authkey: msg91AuthKey, 'Content-Type': 'application/json' } }
+          ));
+          this.logger.log(`OTP SMS sent to ${phone} via MSG91`);
+        } else {
+          this.logger.warn('MSG91 credentials missing. OTP SMS not sent.');
+        }
+      } catch (error) {
+        this.logger.error('Failed to send OTP SMS', error);
+      }
+    }
+
     return { message: 'OTP sent successfully' };
   }
 

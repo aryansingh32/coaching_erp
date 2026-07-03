@@ -33,6 +33,10 @@ export async function listBatches() {
   return apiClient.get('/batches')
 }
 
+export async function getBatchStudents(batchId: string) {
+  return apiClient.get(`/batches/${batchId}/students`)
+}
+
 export async function getStudentTimeline(erpId: string) {
   return apiClient.get(`/students/${erpId}/timeline`)
 }
@@ -48,4 +52,36 @@ export async function markManualAttendance(data: {
   batchId: string
 }) {
   return apiClient.post('/attendance/manual', data)
+}
+
+export async function getStudentAttendance(erpId: string) {
+  return apiClient.get(`/attendance/student/${erpId}`)
+}
+
+export async function getStudentCourses(erpId: string) {
+  return apiClient.get(`/moodle/courses/${erpId}`)
+}
+
+export async function getCourseDetails(courseId: string) {
+  return apiClient.get(`/moodle/course/${courseId}`)
+}
+
+export async function getStudentSchedule(erpId: string) {
+  return apiClient.get(`/schedule/student/${erpId}`)
+}
+
+export async function getStudentProfile(erpId: string) {
+  return apiClient.get(`/students/${erpId}`)
+}
+
+export async function getStudentAssessments(erpId: string) {
+  return apiClient.get(`/assessments/student/${erpId}`)
+}
+
+export async function getAnalyticsEmbedUrl(erpId: string) {
+  return apiClient.get(`/analytics/embed-url/${erpId}`)
+}
+
+export async function updatePushToken(erpId: string, pushToken: string) {
+  return apiClient.post(`/students/${erpId}/push-token`, { pushToken })
 }

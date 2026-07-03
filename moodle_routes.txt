@@ -1,0 +1,1 @@
+./moodle/admin/cli/adhoc_task.php:        'classname' => null,

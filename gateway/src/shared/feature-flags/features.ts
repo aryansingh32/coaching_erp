@@ -27,7 +27,16 @@ export class FeatureGuard implements CanActivate {
     if (!requiredFeature) return true;
 
     const request = context.switchToHttp().getRequest();
-    const tenantId = request.user?.tenantId || 'default';
+    const user = request.user;
+
+    if (user?.role === 'super_admin') {
+      return true;
+    }
+
+    const tenantId = user?.tenantId;
+    if (!tenantId) {
+      throw new ForbiddenException('Tenant context missing from token');
+    }
 
     const enabled = await this.featuresService.isEnabled(tenantId, requiredFeature);
     if (!enabled) {

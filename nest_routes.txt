@@ -1,0 +1,643 @@
+./gateway/src/modules/education-portal/education-portal.controller.ts:  @Get('parent/children')
+./gateway/src/modules/education-portal/education-portal.controller.ts:  @Get('students/:studentId/schedule')
+./gateway/src/modules/education-portal/education-portal.controller.ts:  @Get('students/:studentId/attendance')
+./gateway/src/modules/education-portal/education-portal.controller.ts:  @Get('students/:studentId/invoices')
+./gateway/src/modules/education-portal/education-portal.controller.ts:  @Get('students/:studentId/programs')
+./gateway/src/modules/education-portal/education-portal.controller.ts:  @Get('students/:studentId/grades')
+./gateway/src/modules/education-portal/education-portal.controller.ts:  @Post('students/:studentId/leave')
+./gateway/src/modules/auth/auth.controller.ts:  @Post('send-otp')
+./gateway/src/modules/auth/auth.controller.ts:  @Post('verify-otp')
+./gateway/src/modules/auth/auth.controller.ts:  @Post('refresh')
+./gateway/src/modules/auth/auth.controller.ts:  @Post('logout')
+./gateway/src/modules/auth/auth.controller.ts:  @Get('features')
+./gateway/src/modules/batches/batches.controller.ts:  @Post()
+./gateway/src/modules/batches/batches.controller.ts:  @Get()
+./gateway/src/modules/batches/batches.controller.ts:  @Get(':id')
+./gateway/src/modules/batches/batches.controller.ts:  @Post(':id/enroll')
+./gateway/src/modules/batches/batches.controller.ts:  @Post(':id/schedule')
+./gateway/src/modules/batches/batches.controller.ts:  @Post(':id/instructors')
+./gateway/src/modules/students/students.controller.ts:  @Post()
+./gateway/src/modules/students/students.controller.ts:  @Get()
+./gateway/src/modules/students/students.controller.ts:  @Get(':erpId')
+./gateway/src/modules/students/students.controller.ts:  @Put(':erpId')
+./gateway/src/modules/students/students.controller.ts:  @Post('bulk-import')
+./gateway/src/modules/students/students.controller.ts:  @Post(':erpId/rfid-card')
+./gateway/src/modules/students/students.controller.ts:  @Get(':erpId/timeline')
+./gateway/src/modules/attendance/attendance.controller.ts:  @Post('rfid-punch')
+./gateway/src/modules/attendance/attendance.controller.ts:  @Post('manual')
+./gateway/src/modules/attendance/attendance.controller.ts:  @Get('reports')
+./gateway/src/modules/live-class/live-class.controller.ts:  @Get()
+./gateway/src/modules/live-class/live-class.controller.ts:  @Post(':batchId/create')
+./gateway/src/modules/live-class/live-class.controller.ts:  @Post(':meetingId/join')
+./gateway/src/modules/live-class/live-class.controller.ts:  @Delete(':meetingId')
+./gateway/src/modules/live-class/live-class.controller.ts:  @Get(':meetingId/recordings')
+./gateway/src/modules/analytics/analytics.controller.ts:  @Get('dashboard/:id')
+./gateway/src/modules/analytics/analytics.controller.ts:  @Get('kpis')
+./gateway/src/modules/tests/tests.controller.ts:  @Get()
+./gateway/src/modules/tests/tests.controller.ts:  @Post(':quizId/attempt/start')
+./gateway/src/modules/tests/tests.controller.ts:  @Get('attempt/:attemptId/review')
+./gateway/src/modules/tests/tests.controller.ts:  @Post('attempt/:attemptId/submit')
+./gateway/src/modules/proxy/proxy.controller.ts:  @Get('erp/:doctype')
+./gateway/src/modules/proxy/proxy.controller.ts:  @Get('erp/:doctype/:name')
+./gateway/src/modules/proxy/proxy.controller.ts:  @Post('erp/:doctype')
+./gateway/src/modules/proxy/proxy.controller.ts:  @Put('erp/:doctype/:name')
+./gateway/src/modules/proxy/proxy.controller.ts:  @Post('erp/method')
+./gateway/src/modules/proxy/proxy.controller.ts:  @Post('moodle/call')
+./gateway/src/modules/lms/lms.controller.ts:  @Get('courses')
+./gateway/src/modules/lms/lms.controller.ts:  @Get('courses/:courseId/content')
+./gateway/src/modules/lms/lms.controller.ts:  @Get('courses/:courseId/grades')
+./gateway/src/modules/fees/fees.controller.ts:  @Post('schedule')
+./gateway/src/modules/fees/fees.controller.ts:  @Post('payment')
+./gateway/src/modules/fees/fees.controller.ts:  @Get('pending/:studentId')
+./gateway/src/modules/fees/fees.controller.ts:  @Get('razorpay/config')
+./gateway/src/modules/fees/fees.controller.ts:  @Post('razorpay/config')
+./gateway/src/modules/fees/fees.controller.ts:  @Post('razorpay/order')
+./gateway/src/modules/fees/fees.controller.ts:  @Post('razorpay/verify')
+./gateway/src/modules/fees/fees.controller.ts:  @Post('webhook/razorpay')
+./gateway/src/modules/superadmin/superadmin.controller.ts:  @Get('stats')
+./gateway/src/modules/superadmin/superadmin.controller.ts:  @Get('audit-logs')
+./gateway/src/modules/superadmin/superadmin.controller.ts:  @Get('tenants/:id/metrics')
+./gateway/src/modules/superadmin/superadmin.controller.ts:  @Post('tenants/:id/suspend')
+./gateway/src/modules/superadmin/superadmin.controller.ts:  @Get('features/catalog')
+./gateway/src/modules/superadmin/superadmin.controller.ts:  @Get('tenants/:id/features')
+./gateway/src/modules/superadmin/superadmin.controller.ts:  @Put('tenants/:id/features')
+./gateway/src/modules/health/health.controller.ts:  @Get()
+./gateway/src/modules/health/health.controller.ts:  @Get('ready')
+./gateway/src/modules/tenants/tenants.controller.ts:  @Post()
+./gateway/src/modules/tenants/tenants.controller.ts:  @Get()
+./gateway/src/modules/tenants/tenants.controller.ts:  @Get(':id')
+./gateway/src/modules/tenants/tenants.controller.ts:  @Get(':id/features')
+./gateway/src/modules/tenants/tenants.controller.ts:  @Put(':id')
+./gateway/src/modules/tenants/tenants.controller.ts:  @Delete(':id')
+./bigbluebutton/bbb-shared-notes-server/src/redis/service/uploadPresentation.ts:    const res = await axios.post(callbackUrl, formData, {
+./bigbluebutton/bbb-export-annotations/workers/notifier.js:    const res = await axios.post(callbackUrl, formData,
+./bigbluebutton/bigbluebutton-tests/playwright/core/helpers.ts:  const response = await axios.get<T>(url, { adapter: 'http' });
+./bigbluebutton/bigbluebutton-tests/playwright/core/helpers.ts:  return axios.get(url, { adapter: 'http' });
+./web/lib/api-client.ts:          const res = await axios.post<ApiResponse<{ accessToken: string }>>(
+./novu/playground/nestjs/src/app.controller.ts:  @Get()
+./novu/playground/nestjs/src/app.controller.ts:  @Get('/welcome/:userId')
+./novu/apps/worker/src/app/health/health.controller.ts:  @Get()
+./novu/apps/webhook/src/app.controller.ts:  @Get()
+./novu/apps/webhook/src/webhooks/webhooks.controller.ts:  @Post('/organizations/:organizationId/environments/:environmentId/email/:providerOrIntegrationId')
+./novu/apps/webhook/src/webhooks/webhooks.controller.ts:  @Post('/organizations/:organizationId/environments/:environmentId/sms/:providerOrIntegrationId')
+./novu/apps/webhook/src/health/health.controller.ts:  @Get()
+./novu/apps/api/e2e/setup.ts:      const response = await axios.get(healthCheckUrl, {
+./novu/apps/api/src/app/subscribers/e2e/bulk-create-subscribers.e2e.ts:    const response = await axios.post(
+./novu/apps/api/src/app/subscribers/usecases/chat-oauth-callback/chat-oauth-callback.usecase.ts:    const res = await axios.post(this.SLACK_ACCESS_URL, body, config);
+./novu/apps/api/src/app/subscribers/subscribersV1.controller.ts:  @Get('')
+./novu/apps/api/src/app/subscribers/subscribersV1.controller.ts:  @Get('/:subscriberId')
+./novu/apps/api/src/app/subscribers/subscribersV1.controller.ts:  @Post('/')
+./novu/apps/api/src/app/subscribers/subscribersV1.controller.ts:  @Post('/bulk')
+./novu/apps/api/src/app/subscribers/subscribersV1.controller.ts:  @Put('/:subscriberId')
+./novu/apps/api/src/app/subscribers/subscribersV1.controller.ts:  @Put('/:subscriberId/credentials')
+./novu/apps/api/src/app/subscribers/subscribersV1.controller.ts:  @Patch('/:subscriberId/credentials')
+./novu/apps/api/src/app/subscribers/subscribersV1.controller.ts:  @Delete('/:subscriberId/credentials/:providerId')
+./novu/apps/api/src/app/subscribers/subscribersV1.controller.ts:  @Patch('/:subscriberId/online-status')
+./novu/apps/api/src/app/subscribers/subscribersV1.controller.ts:  @Delete('/:subscriberId')
+./novu/apps/api/src/app/subscribers/subscribersV1.controller.ts:  @Get('/:subscriberId/preferences')
+./novu/apps/api/src/app/subscribers/subscribersV1.controller.ts:  @Get('/:subscriberId/preferences/:parameter')
+./novu/apps/api/src/app/subscribers/subscribersV1.controller.ts:  @Patch('/:subscriberId/preferences/:parameter')
+./novu/apps/api/src/app/subscribers/subscribersV1.controller.ts:  @Patch('/:subscriberId/preferences')
+./novu/apps/api/src/app/subscribers/subscribersV1.controller.ts:  @Get('/:subscriberId/notifications/feed')
+./novu/apps/api/src/app/subscribers/subscribersV1.controller.ts:  @Get('/:subscriberId/notifications/unseen')
+./novu/apps/api/src/app/subscribers/subscribersV1.controller.ts:  @Post('/:subscriberId/messages/markAs')
+./novu/apps/api/src/app/subscribers/subscribersV1.controller.ts:  @Post('/:subscriberId/messages/mark-as')
+./novu/apps/api/src/app/subscribers/subscribersV1.controller.ts:  @Post('/:subscriberId/messages/mark-all')
+./novu/apps/api/src/app/subscribers/subscribersV1.controller.ts:  @Post('/:subscriberId/messages/:messageId/actions/:type')
+./novu/apps/api/src/app/subscribers/subscribersV1.controller.ts:  @Get('/:subscriberId/credentials/:providerId/oauth/callback')
+./novu/apps/api/src/app/subscribers/subscribersV1.controller.ts:  @Get('/:subscriberId/credentials/:providerId/oauth')
+./novu/apps/api/src/app/contexts/contexts.controller.ts:  @Post('')
+./novu/apps/api/src/app/contexts/contexts.controller.ts:  @Patch('/:type/:id')
+./novu/apps/api/src/app/contexts/contexts.controller.ts:  @Get('')
+./novu/apps/api/src/app/contexts/contexts.controller.ts:  @Get('/:type/:id')
+./novu/apps/api/src/app/contexts/contexts.controller.ts:  @Delete('/:type/:id')
+./novu/apps/api/src/app/topics-v2/topics.controller.ts:  @Get('')
+./novu/apps/api/src/app/topics-v2/topics.controller.ts:  @Post('')
+./novu/apps/api/src/app/topics-v2/topics.controller.ts:  @Get('/:topicKey')
+./novu/apps/api/src/app/topics-v2/topics.controller.ts:  @Patch('/:topicKey')
+./novu/apps/api/src/app/topics-v2/topics.controller.ts:  @Delete('/:topicKey')
+./novu/apps/api/src/app/topics-v2/topics.controller.ts:  @Get('/:topicKey/subscriptions')
+./novu/apps/api/src/app/topics-v2/topics.controller.ts:  @Post('/:topicKey/subscriptions')
+./novu/apps/api/src/app/topics-v2/topics.controller.ts:  @Delete('/:topicKey/subscriptions')
+./novu/apps/api/src/app/topics-v2/topics.controller.ts:  @Get('/:topicKey/subscriptions/:identifier')
+./novu/apps/api/src/app/topics-v2/topics.controller.ts:  @Patch('/:topicKey/subscriptions/:identifier')
+./novu/apps/api/src/app/channel-endpoints/channel-endpoints.controller.ts:  @Get()
+./novu/apps/api/src/app/channel-endpoints/channel-endpoints.controller.ts:  @Get('/:identifier')
+./novu/apps/api/src/app/channel-endpoints/channel-endpoints.controller.ts:  @Post()
+./novu/apps/api/src/app/channel-endpoints/channel-endpoints.controller.ts:  @Patch('/:identifier')
+./novu/apps/api/src/app/channel-endpoints/channel-endpoints.controller.ts:  @Delete('/:identifier')
+./novu/apps/api/src/app/events/e2e/process-subscriber.e2e.ts:  return await axios.patch(`http://127.0.0.1:${process.env.PORT}/v1/widgets/preferences/${templateId}`, data, {
+./novu/apps/api/src/app/events/e2e/bridge-trigger.e2e.ts:  const response = await axios.post(
+./novu/apps/api/src/app/events/e2e/bridge-trigger.e2e.ts:  const response = await axios.post(
+./novu/apps/api/src/app/events/e2e/trigger-event-ssrf.e2e.ts:    return axios.post(
+./novu/apps/api/src/app/events/e2e/trigger-event-ssrf.e2e.ts:    const result = await axios.post(
+./novu/apps/api/src/app/events/events.controller.ts:  @Post('/trigger')
+./novu/apps/api/src/app/events/events.controller.ts:  @Post('/trigger/bulk')
+./novu/apps/api/src/app/events/events.controller.ts:  @Post('/trigger/broadcast')
+./novu/apps/api/src/app/events/events.controller.ts:  @Post('/test/email')
+./novu/apps/api/src/app/events/events.controller.ts:  @Delete('/trigger/:transactionId')
+./novu/apps/api/src/app/widgets/e2e/mark-as.e2e.ts:    await axios.post(
+./novu/apps/api/src/app/widgets/e2e/mark-as.e2e.ts:    const response = await axios.post(
+./novu/apps/api/src/app/widgets/e2e/mark-as-by-mark.e2e.ts:  return await axios.post(
+./novu/apps/api/src/app/widgets/e2e/get-unseen-count.e2e.ts:    await axios.post(
+./novu/apps/api/src/app/widgets/e2e/get-unseen-count.e2e.ts:    await axios.post(
+./novu/apps/api/src/app/widgets/e2e/get-unseen-count.e2e.ts:    await axios.post(
+./novu/apps/api/src/app/widgets/e2e/get-unseen-count.e2e.ts:    await axios.post(
+./novu/apps/api/src/app/widgets/e2e/get-unseen-count.e2e.ts:    const response = await axios.get(`http://127.0.0.1:${process.env.PORT}/v1/widgets/notifications/unseen`, {
+./novu/apps/api/src/app/widgets/e2e/update-subscriber-preference.e2e.ts:  return await axios.patch(`http://127.0.0.1:${process.env.PORT}/v1/widgets/preferences/${templateId}`, data, {
+./novu/apps/api/src/app/widgets/e2e/get-notification-feed.e2e.ts:    const response = await axios.get(`http://127.0.0.1:${process.env.PORT}/v1/widgets/notifications/feed`, {
+./novu/apps/api/src/app/widgets/e2e/get-notification-feed.e2e.ts:    return await axios.post(
+./novu/apps/api/src/app/widgets/e2e/remove-messages-bulk.e2e.ts:    await axios.post(
+./novu/apps/api/src/app/widgets/e2e/remove-messages-bulk.e2e.ts:      const res = await axios.post(
+./novu/apps/api/src/app/widgets/e2e/remove-messages-bulk.e2e.ts:    const res = await axios.post(
+./novu/apps/api/src/app/widgets/e2e/remove-messages-bulk.e2e.ts:      await axios.post(
+./novu/apps/api/src/app/widgets/e2e/mark-all-as-read.e2e.ts:    await axios.post(
+./novu/apps/api/src/app/widgets/e2e/mark-all-as-read.e2e.ts:    await axios.post(
+./novu/apps/api/src/app/widgets/e2e/mark-all-as-read.e2e.ts:    const response = await axios.get(`http://127.0.0.1:${process.env.PORT}/v1/widgets/notifications/unseen`, {
+./novu/apps/api/src/app/widgets/e2e/mark-all-as-read.e2e.ts:    const response = await axios.get(`http://127.0.0.1:${process.env.PORT}/v1/widgets/notifications/count?${query}`, {
+./novu/apps/api/src/app/widgets/e2e/remove-all-messages.e2e.ts:    await axios.delete(`http://127.0.0.1:${process.env.PORT}/v1/widgets/messages`, {
+./novu/apps/api/src/app/widgets/e2e/remove-all-messages.e2e.ts:    await axios.delete(`http://127.0.0.1:${process.env.PORT}/v1/widgets/messages?feedId=${_feedId}`, {
+./novu/apps/api/src/app/widgets/e2e/get-unread-count.e2e.ts:    await axios.post(
+./novu/apps/api/src/app/widgets/e2e/get-unread-count.e2e.ts:    await axios.post(
+./novu/apps/api/src/app/widgets/e2e/get-unread-count.e2e.ts:    await axios.post(
+./novu/apps/api/src/app/widgets/e2e/get-unread-count.e2e.ts:    const response = await axios.get(`http://127.0.0.1:${process.env.PORT}/v1/widgets/notifications/unread`, {
+./novu/apps/api/src/app/widgets/e2e/get-count.e2e.ts:    await axios.post(
+./novu/apps/api/src/app/widgets/e2e/get-count.e2e.ts:    await axios.post(
+./novu/apps/api/src/app/widgets/e2e/get-count.e2e.ts:    await axios.post(
+./novu/apps/api/src/app/widgets/e2e/get-count.e2e.ts:    const response = await axios.get(`http://127.0.0.1:${process.env.PORT}/v1/widgets/notifications/count`, {
+./novu/apps/api/src/app/widgets/e2e/get-subscriber-preference.e2e.ts:  return await axios.get(`http://127.0.0.1:${process.env.PORT}/v1/widgets/preferences`, {
+./novu/apps/api/src/app/widgets/widgets.controller.ts:  @Post('/session/initialize')
+./novu/apps/api/src/app/widgets/widgets.controller.ts:  @Get('/notifications/feed')
+./novu/apps/api/src/app/widgets/widgets.controller.ts:  @Get('/notifications/unseen')
+./novu/apps/api/src/app/widgets/widgets.controller.ts:  @Get('/notifications/unread')
+./novu/apps/api/src/app/widgets/widgets.controller.ts:  @Get('/notifications/count')
+./novu/apps/api/src/app/widgets/widgets.controller.ts:  @Post('/messages/markAs')
+./novu/apps/api/src/app/widgets/widgets.controller.ts:  @Post('/messages/mark-as')
+./novu/apps/api/src/app/widgets/widgets.controller.ts:  @Delete('/messages/:messageId')
+./novu/apps/api/src/app/widgets/widgets.controller.ts:  @Delete('/messages')
+./novu/apps/api/src/app/widgets/widgets.controller.ts:  @Post('/messages/bulk/delete')
+./novu/apps/api/src/app/widgets/widgets.controller.ts:  @Post('/messages/read')
+./novu/apps/api/src/app/widgets/widgets.controller.ts:  @Post('/messages/seen')
+./novu/apps/api/src/app/widgets/widgets.controller.ts:  @Post('/messages/:messageId/actions/:type')
+./novu/apps/api/src/app/widgets/widgets.controller.ts:  @Get('/organization')
+./novu/apps/api/src/app/widgets/widgets.controller.ts:  @Get('/preferences')
+./novu/apps/api/src/app/widgets/widgets.controller.ts:  @Get('/preferences/:level')
+./novu/apps/api/src/app/widgets/widgets.controller.ts:  @Patch('/preferences/:templateId')
+./novu/apps/api/src/app/widgets/widgets.controller.ts:  @Patch('/preferences')
+./novu/apps/api/src/app/widgets/widgets.controller.ts:  @Post('/usage/log')
+./novu/apps/api/src/app/domains/domains.controller.ts:  @Get('/')
+./novu/apps/api/src/app/domains/domains.controller.ts:  @Post('/')
+./novu/apps/api/src/app/domains/domains.controller.ts:  @Get('/:domain')
+./novu/apps/api/src/app/domains/domains.controller.ts:  @Post('/:domain/verify')
+./novu/apps/api/src/app/domains/domains.controller.ts:  @Post('/:domain/diagnose')
+./novu/apps/api/src/app/domains/domains.controller.ts:  @Get('/:domain/routes')
+./novu/apps/api/src/app/domains/domains.controller.ts:  @Post('/:domain/routes')
+./novu/apps/api/src/app/domains/domains.controller.ts:  @Get('/:domain/routes/:address')
+./novu/apps/api/src/app/domains/domains.controller.ts:  @Patch('/:domain/routes/:address')
+./novu/apps/api/src/app/domains/domains.controller.ts:  @Delete('/:domain/routes/:address')
+./novu/apps/api/src/app/domains/domains.controller.ts:  @Post('/:domain/routes/:address/test')
+./novu/apps/api/src/app/domains/domains.controller.ts:  @Get('/:domain/auto-configure')
+./novu/apps/api/src/app/domains/domains.controller.ts:  @Post('/:domain/auto-configure/start')
+./novu/apps/api/src/app/domains/domains.controller.ts:  @Patch('/:domain')
+./novu/apps/api/src/app/domains/domains.controller.ts:  @Delete('/:domain')
+./novu/apps/api/src/app/feeds/feeds.controller.ts:  @Post('')
+./novu/apps/api/src/app/feeds/feeds.controller.ts:  @Get('')
+./novu/apps/api/src/app/feeds/feeds.controller.ts:  @Delete('/:feedId')
+./novu/apps/api/src/app/inbox/inbox.topic.controller.ts:  @Get('/topics/:topicKey/subscriptions')
+./novu/apps/api/src/app/inbox/inbox.topic.controller.ts:  @Get('/topics/:topicKey/subscriptions/:identifier')
+./novu/apps/api/src/app/inbox/inbox.topic.controller.ts:  @Post('/topics/:topicKey/subscriptions')
+./novu/apps/api/src/app/inbox/inbox.topic.controller.ts:  @Patch('/topics/:topicKey/subscriptions/:identifier')
+./novu/apps/api/src/app/inbox/inbox.topic.controller.ts:  @Delete('/topics/:topicKey/subscriptions/:identifier')
+./novu/apps/api/src/app/inbox/inbox.controller.ts:  @Post('/session')
+./novu/apps/api/src/app/inbox/inbox.controller.ts:  @Get('/notifications')
+./novu/apps/api/src/app/inbox/inbox.controller.ts:  @Get('/notifications/count')
+./novu/apps/api/src/app/inbox/inbox.controller.ts:  @Get('/preferences')
+./novu/apps/api/src/app/inbox/inbox.controller.ts:  @Get('/preferences/global')
+./novu/apps/api/src/app/inbox/inbox.controller.ts:  @Patch('/notifications/:id/read')
+./novu/apps/api/src/app/inbox/inbox.controller.ts:  @Patch('/notifications/:id/unread')
+./novu/apps/api/src/app/inbox/inbox.controller.ts:  @Patch('/notifications/:id/archive')
+./novu/apps/api/src/app/inbox/inbox.controller.ts:  @Patch('/notifications/:id/unarchive')
+./novu/apps/api/src/app/inbox/inbox.controller.ts:  @Patch('/notifications/:id/snooze')
+./novu/apps/api/src/app/inbox/inbox.controller.ts:  @Patch('/notifications/:id/unsnooze')
+./novu/apps/api/src/app/inbox/inbox.controller.ts:  @Delete('/notifications/:id/delete')
+./novu/apps/api/src/app/inbox/inbox.controller.ts:  @Patch('/notifications/:id/complete')
+./novu/apps/api/src/app/inbox/inbox.controller.ts:  @Patch('/notifications/:id/revert')
+./novu/apps/api/src/app/inbox/inbox.controller.ts:  @Patch('/preferences')
+./novu/apps/api/src/app/inbox/inbox.controller.ts:  @Patch('/preferences/bulk')
+./novu/apps/api/src/app/inbox/inbox.controller.ts:  @Patch('/preferences/:workflowIdOrIdentifier')
+./novu/apps/api/src/app/inbox/inbox.controller.ts:  @Patch('/subscriptions/:subscriptionIdentifier/preferences/:workflowIdOrIdentifier')
+./novu/apps/api/src/app/inbox/inbox.controller.ts:  @Post('/notifications/seen')
+./novu/apps/api/src/app/inbox/inbox.controller.ts:  @Post('/notifications/read')
+./novu/apps/api/src/app/inbox/inbox.controller.ts:  @Post('/notifications/archive')
+./novu/apps/api/src/app/inbox/inbox.controller.ts:  @Post('/notifications/read-archive')
+./novu/apps/api/src/app/inbox/inbox.controller.ts:  @Post('/notifications/delete')
+./novu/apps/api/src/app/inbox/inbox.controller.ts:  @Post('/events')
+./novu/apps/api/src/app/inbox/inbox.controller.ts:  @Get('/channel-connections')
+./novu/apps/api/src/app/inbox/inbox.controller.ts:  @Get('/channel-connections/:identifier')
+./novu/apps/api/src/app/inbox/inbox.controller.ts:  @Delete('/channel-connections/:identifier')
+./novu/apps/api/src/app/inbox/inbox.controller.ts:  @Get('/channel-endpoints')
+./novu/apps/api/src/app/inbox/inbox.controller.ts:  @Delete('/channel-endpoints/:identifier')
+./novu/apps/api/src/app/inbox/inbox.controller.ts:  @Post('/channel-connections/oauth')
+./novu/apps/api/src/app/inbox/inbox.controller.ts:  @Post('/channel-endpoints/oauth')
+./novu/apps/api/src/app/content-templates/content-templates.controller.ts:  @Post('/preview/email')
+./novu/apps/api/src/app/content-templates/content-templates.controller.ts:  @Post('/preview/in-app')
+./novu/apps/api/src/app/content-templates/content-templates.controller.ts:  @Post('/preview/sms')
+./novu/apps/api/src/app/content-templates/content-templates.controller.ts:  @Post('/preview/chat')
+./novu/apps/api/src/app/content-templates/content-templates.controller.ts:  @Post('/preview/push')
+./novu/apps/api/src/app/notifications/notification.controller.ts:  @Get('')
+./novu/apps/api/src/app/notifications/notification.controller.ts:  @Get('/stats')
+./novu/apps/api/src/app/notifications/notification.controller.ts:  @Get('/graph/stats')
+./novu/apps/api/src/app/notifications/notification.controller.ts:  @Get('/:notificationId')
+./novu/apps/api/src/app/channel-connections/channel-connections.controller.ts:  @Get()
+./novu/apps/api/src/app/channel-connections/channel-connections.controller.ts:  @Post()
+./novu/apps/api/src/app/channel-connections/channel-connections.controller.ts:  @Get('/:identifier')
+./novu/apps/api/src/app/channel-connections/channel-connections.controller.ts:  @Patch('/:identifier')
+./novu/apps/api/src/app/channel-connections/channel-connections.controller.ts:  @Delete('/:identifier')
+./novu/apps/api/src/app/organization/organization.controller.ts:  @Post('/')
+./novu/apps/api/src/app/organization/organization.controller.ts:  @Get('/')
+./novu/apps/api/src/app/organization/organization.controller.ts:  @Get('/me')
+./novu/apps/api/src/app/organization/organization.controller.ts:  @Delete('/members/:memberId')
+./novu/apps/api/src/app/organization/organization.controller.ts:  @Put('/members/:memberId/roles')
+./novu/apps/api/src/app/organization/organization.controller.ts:  @Get('/members')
+./novu/apps/api/src/app/organization/organization.controller.ts:  @Put('/branding')
+./novu/apps/api/src/app/organization/organization.controller.ts:  @Patch('/')
+./novu/apps/api/src/app/organization/ee.organization.controller.ts:  @Get('/me')
+./novu/apps/api/src/app/organization/ee.organization.controller.ts:  @Put('/branding')
+./novu/apps/api/src/app/organization/ee.organization.controller.ts:  @Patch('/')
+./novu/apps/api/src/app/organization/ee.organization.controller.ts:  @Get('/settings')
+./novu/apps/api/src/app/organization/ee.organization.controller.ts:  @Patch('/settings')
+./novu/apps/api/src/app/auth/auth.controller.ts:  @Get('/github')
+./novu/apps/api/src/app/auth/auth.controller.ts:  @Get('/github/callback')
+./novu/apps/api/src/app/auth/auth.controller.ts:  @Get('/refresh')
+./novu/apps/api/src/app/auth/auth.controller.ts:  @Post('/register')
+./novu/apps/api/src/app/auth/auth.controller.ts:  @Post('/reset/request')
+./novu/apps/api/src/app/auth/auth.controller.ts:  @Post('/reset')
+./novu/apps/api/src/app/auth/auth.controller.ts:  @Post('/login')
+./novu/apps/api/src/app/auth/auth.controller.ts:  @Post('/organizations/:organizationId/switch')
+./novu/apps/api/src/app/auth/auth.controller.ts:  @Post('/update-password')
+./novu/apps/api/src/app/auth/auth.controller.ts:  @Get('/test/token/:userId')
+./novu/apps/api/src/app/environments-v2/environments.controller.ts:  @Get('/:environmentId/tags')
+./novu/apps/api/src/app/environments-v2/environments.controller.ts:  @Post('/:targetEnvironmentId/publish')
+./novu/apps/api/src/app/environments-v2/environments.controller.ts:  @Post('/:targetEnvironmentId/diff')
+./novu/apps/api/src/app/layouts-v1/layouts-v1.controller.ts:  @Post('')
+./novu/apps/api/src/app/layouts-v1/layouts-v1.controller.ts:  @Get()
+./novu/apps/api/src/app/layouts-v1/layouts-v1.controller.ts:  @Get('/:layoutId')
+./novu/apps/api/src/app/layouts-v1/layouts-v1.controller.ts:  @Delete('/:layoutId')
+./novu/apps/api/src/app/layouts-v1/layouts-v1.controller.ts:  @Patch('/:layoutId')
+./novu/apps/api/src/app/layouts-v1/layouts-v1.controller.ts:  @Post('/:layoutId/default')
+./novu/apps/api/src/app/tenant/tenant.controller.ts:  @Get('')
+./novu/apps/api/src/app/tenant/tenant.controller.ts:  @Get('/:identifier')
+./novu/apps/api/src/app/tenant/tenant.controller.ts:  @Post('/')
+./novu/apps/api/src/app/tenant/tenant.controller.ts:  @Patch('/:identifier')
+./novu/apps/api/src/app/tenant/tenant.controller.ts:  @Delete('/:identifier')
+./novu/apps/api/src/app/support/support.controller.ts:  @Post('customer-details')
+./novu/apps/api/src/app/support/support.controller.ts:  @Post('agents-early-access')
+./novu/apps/api/src/app/support/support.controller.ts:  @Post('create-thread')
+./novu/apps/api/src/app/support/support.controller.ts:  @Post('mobile-setup')
+./novu/apps/api/src/app/cli-auth/cli-auth.controller.ts:  @Post()
+./novu/apps/api/src/app/cli-auth/cli-auth.controller.ts:  @Post('/:deviceCode/poll')
+./novu/apps/api/src/app/cli-auth/cli-auth.controller.ts:  @Post('/:deviceCode/approve')
+./novu/apps/api/src/app/preferences/preferences.controller.ts:  @Get('/')
+./novu/apps/api/src/app/preferences/preferences.controller.ts:  @Post('/')
+./novu/apps/api/src/app/preferences/preferences.controller.ts:  @Delete('/')
+./novu/apps/api/src/app/agents/e2e/helpers/slack-emulator.ts: * `baseURL`, then `axios.getUri()` uses `this.axios.defaults.baseURL` per
+./novu/apps/api/src/app/agents/e2e/upload-custom-skill.e2e.ts:    return fetch.getCalls().find((call) => /\/tarball\//.test(String(call.args[0])));
+./novu/apps/api/src/app/agents/e2e/upload-custom-skill.e2e.ts:        const firstUrl = String(fetch.getCall(0).args[0]);
+./novu/apps/api/src/app/agents/e2e/upload-custom-skill.e2e.ts:        const secondUrl = String(fetch.getCall(1).args[0]);
+./novu/apps/api/src/app/agents/e2e/upload-custom-skill.e2e.ts:        for (const call of fetch.getCalls()) {
+./novu/apps/api/src/app/agents/e2e/upload-custom-skill.e2e.ts:        for (const call of fetch.getCalls()) {
+./novu/apps/api/src/app/agents/email/agent-email-actions.controller.ts:  @Get('/preview')
+./novu/apps/api/src/app/agents/email/agent-email-actions.controller.ts:  @Post('/execute')
+./novu/apps/api/src/app/agents/mcp/oauth/agents-mcp-oauth.controller.ts:  @Get('/oauth/callback')
+./novu/apps/api/src/app/agents/mcp/oauth/agents-mcp-oauth.controller.ts:  @Get('/provider-managed/redirect')
+./novu/apps/api/src/app/agents/conversation-runtime/ingress/agent-inbound.controller.ts:  @Get('/:agentId/webhook/:integrationIdentifier')
+./novu/apps/api/src/app/agents/conversation-runtime/ingress/agent-inbound.controller.ts:  @Post('/:agentId/webhook/:integrationIdentifier')
+./novu/apps/api/src/app/agents/conversation-runtime/reply/agent-reply.controller.ts:  @Post('/:agentId/reply')
+./novu/apps/api/src/app/agents/managed-runtime/managed-runtime.controller.ts:  @Post('/events')
+./novu/apps/api/src/app/agents/channels/telegram-linking/agents-public.controller.ts:  @Get('telegram/mobile-configure/status')
+./novu/apps/api/src/app/agents/channels/telegram-linking/agents-public.controller.ts:  @Post('telegram/mobile-configure')
+./novu/apps/api/src/app/agents/channels/telegram-linking/agents-public.controller.ts:  @Get('slack/setup/status')
+./novu/apps/api/src/app/agents/channels/telegram-linking/agents-public.controller.ts:  @Post('slack/setup')
+./novu/apps/api/src/app/agents/channels/integrations/agent-integrations.controller.ts:  @Post('/:identifier/integrations')
+./novu/apps/api/src/app/agents/channels/integrations/agent-integrations.controller.ts:  @Get('/:identifier/integrations')
+./novu/apps/api/src/app/agents/channels/integrations/agent-integrations.controller.ts:  @Patch('/:identifier/integrations/:agentIntegrationId')
+./novu/apps/api/src/app/agents/channels/integrations/agent-integrations.controller.ts:  @Delete('/:identifier/integrations/:agentIntegrationId')
+./novu/apps/api/src/app/agents/channels/integrations/agent-integrations.controller.ts:  @Post('/:identifier/integrations/:integrationIdentifier/whatsapp/auto-configure')
+./novu/apps/api/src/app/agents/channels/integrations/agent-integrations.controller.ts:  @Post('/:identifier/integrations/:integrationIdentifier/whatsapp/test-template')
+./novu/apps/api/src/app/agents/channels/integrations/agent-integrations.controller.ts:  @Post('/:identifier/test-email')
+./novu/apps/api/src/app/agents/channels/integrations/agent-integrations.controller.ts:  @Patch('/:identifier/inbox/shared')
+./novu/apps/api/src/app/agents/channels/integrations/agent-integrations.controller.ts:  @Post('/:identifier/welcome-message')
+./novu/apps/api/src/app/agents/channels/integrations/agent-integrations.controller.ts:  @Post('/:identifier/integrations/:integrationId/telegram/configure')
+./novu/apps/api/src/app/agents/channels/integrations/agent-integrations.controller.ts:  @Post('/:identifier/integrations/:integrationId/telegram/mobile-link')
+./novu/apps/api/src/app/agents/channels/integrations/agent-integrations.controller.ts:  @Post('/:identifier/integrations/:integrationId/slack/setup-link')
+./novu/apps/api/src/app/agents/channels/integrations/agent-integrations.controller.ts:  @Post('/:identifier/integrations/:integrationId/telegram/subscriber-link')
+./novu/apps/api/src/app/agents/management/agents.controller.ts:  @Get('/emoji')
+./novu/apps/api/src/app/agents/management/agents.controller.ts:  @Post('/')
+./novu/apps/api/src/app/agents/management/agents.controller.ts:  @Get('/')
+./novu/apps/api/src/app/agents/management/agents.controller.ts:  @Put('/:identifier/bridge')
+./novu/apps/api/src/app/agents/management/agents.controller.ts:  @Get('/:identifier')
+./novu/apps/api/src/app/agents/management/agents.controller.ts:  @Patch('/:identifier')
+./novu/apps/api/src/app/agents/management/agents.controller.ts:  @Delete('/:identifier')
+./novu/apps/api/src/app/agents/management/agent-runtime.controller.ts:  @Post('/verify-credentials')
+./novu/apps/api/src/app/agents/management/agent-runtime.controller.ts:  @Post('/generate')
+./novu/apps/api/src/app/agents/management/agent-runtime.controller.ts:  @Get('/:identifier/demo-quota')
+./novu/apps/api/src/app/agents/management/agent-runtime.controller.ts:  @Post('/:identifier/migrate-runtime')
+./novu/apps/api/src/app/agents/management/agent-runtime.controller.ts:  @Get('/:identifier/runtime/config')
+./novu/apps/api/src/app/agents/management/agent-runtime.controller.ts:  @Patch('/:identifier/runtime/config')
+./novu/apps/api/src/app/agents/management/agent-runtime.controller.ts:  @Get('/:identifier/mcp-servers')
+./novu/apps/api/src/app/agents/management/agent-runtime.controller.ts:  @Post('/:identifier/mcp-servers')
+./novu/apps/api/src/app/agents/management/agent-runtime.controller.ts:  @Put('/:identifier/mcp-servers')
+./novu/apps/api/src/app/agents/management/agent-runtime.controller.ts:  @Delete('/:identifier/mcp-servers/:mcpId')
+./novu/apps/api/src/app/agents/management/agent-runtime.controller.ts:  @Post('/:identifier/mcp-servers/:mcpId/oauth/url')
+./novu/apps/api/src/app/agents/management/agent-runtime.controller.ts:  @Post('/:identifier/mcp-servers/:mcpId/provider-vault')
+./novu/apps/api/src/app/agents/management/agent-runtime.controller.ts:  @Get('/:identifier/mcp-servers/:mcpId/connection')
+./novu/apps/api/src/app/agents/management/agent-runtime.controller.ts:  @Post('/skills')
+./novu/apps/api/src/app/storage/storage.controller.ts:  @Get('/upload-url')
+./novu/apps/api/src/app/messages/messages.controller.ts:  @Get('')
+./novu/apps/api/src/app/messages/messages.controller.ts:  @Delete('/:messageId')
+./novu/apps/api/src/app/messages/messages.controller.ts:  @Delete('/transaction/:transactionId')
+./novu/apps/api/src/app/internal/internal.controller.ts:  @Post('/subscriber-online-state')
+./novu/apps/api/src/app/internal/internal.controller.ts:  @Post('/scheduler/callback')
+./novu/apps/api/src/app/outbound-webhooks/outbound-webhooks.controller.ts:  @Get('/portal/token')
+./novu/apps/api/src/app/outbound-webhooks/outbound-webhooks.controller.ts:  @Post('/portal/token')
+./novu/apps/api/src/app/workflow-overrides/workflow-overrides.controller.ts:  @Post('/')
+./novu/apps/api/src/app/workflow-overrides/workflow-overrides.controller.ts:  @Put('/:overrideId')
+./novu/apps/api/src/app/workflow-overrides/workflow-overrides.controller.ts:  @Put('/workflows/:workflowId/tenants/:tenantId')
+./novu/apps/api/src/app/workflow-overrides/workflow-overrides.controller.ts:  @Get('/:overrideId')
+./novu/apps/api/src/app/workflow-overrides/workflow-overrides.controller.ts:  @Get('/workflows/:workflowId/tenants/:tenantId')
+./novu/apps/api/src/app/workflow-overrides/workflow-overrides.controller.ts:  @Delete('/:overrideId')
+./novu/apps/api/src/app/workflow-overrides/workflow-overrides.controller.ts:  @Get('/')
+./novu/apps/api/src/app/environment-variables/environment-variables.controller.ts:  @Get('/')
+./novu/apps/api/src/app/environment-variables/environment-variables.controller.ts:  @Get('/:variableKey/usage')
+./novu/apps/api/src/app/environment-variables/environment-variables.controller.ts:  @Get('/:variableKey')
+./novu/apps/api/src/app/environment-variables/environment-variables.controller.ts:  @Post('/')
+./novu/apps/api/src/app/environment-variables/environment-variables.controller.ts:  @Patch('/:variableKey')
+./novu/apps/api/src/app/environment-variables/environment-variables.controller.ts:  @Delete('/:variableKey')
+./novu/apps/api/src/app/environments-v1/environments-v1.controller.ts:  @Get('/me')
+./novu/apps/api/src/app/environments-v1/environments-v1.controller.ts:  @Post('/')
+./novu/apps/api/src/app/environments-v1/environments-v1.controller.ts:  @Get('/')
+./novu/apps/api/src/app/environments-v1/environments-v1.controller.ts:  @Put('/:environmentId')
+./novu/apps/api/src/app/environments-v1/environments-v1.controller.ts:  @Get('/api-keys')
+./novu/apps/api/src/app/environments-v1/environments-v1.controller.ts:  @Post('/api-keys/regenerate')
+./novu/apps/api/src/app/environments-v1/environments-v1.controller.ts:  @Delete('/:environmentId')
+./novu/apps/api/src/app/environments-v1/novu-bridge.controller.ts:  @Get()
+./novu/apps/api/src/app/environments-v1/novu-bridge.controller.ts:  @Post()
+./novu/apps/api/src/app/topics-v1/topics-v1.controller.ts:  @Post('')
+./novu/apps/api/src/app/topics-v1/topics-v1.controller.ts:  @Post('/:topicKey/subscribers')
+./novu/apps/api/src/app/topics-v1/topics-v1.controller.ts:  @Get('/:topicKey/subscribers/:externalSubscriberId')
+./novu/apps/api/src/app/topics-v1/topics-v1.controller.ts:  @Post('/:topicKey/subscribers/removal')
+./novu/apps/api/src/app/topics-v1/topics-v1.controller.ts:  @Get('')
+./novu/apps/api/src/app/topics-v1/topics-v1.controller.ts:  @Delete('/:topicKey')
+./novu/apps/api/src/app/topics-v1/topics-v1.controller.ts:  @Get('/:topicKey')
+./novu/apps/api/src/app/topics-v1/topics-v1.controller.ts:  @Patch('/:topicKey')
+./novu/apps/api/src/app/bridge/e2e/health-check.e2e.ts:    const result = await axios.get(`${bridgeServer.serverPath}/novu?action=health-check`);
+./novu/apps/api/src/app/bridge/e2e/health-check.e2e.ts:    const result = await axios.get(`${bridgeServer.serverPath}/novu?action=health-check`);
+./novu/apps/api/src/app/bridge/e2e/health-check.e2e.ts:    const result = await axios.get(`${bridgeServer.serverPath}/novu?action=health-check`);
+./novu/apps/api/src/app/bridge/e2e/health-check.e2e.ts:    const result = await axios.get(`${bridgeServer.serverPath}/novu?action=health-check`);
+./novu/apps/api/src/app/bridge/bridge.controller.ts:  @Get('/status')
+./novu/apps/api/src/app/bridge/bridge.controller.ts:  @Post('/preview/:workflowId/:stepId')
+./novu/apps/api/src/app/bridge/bridge.controller.ts:  @Post('/sync')
+./novu/apps/api/src/app/bridge/bridge.controller.ts:  @Post('/diff')
+./novu/apps/api/src/app/bridge/bridge.controller.ts:  @Get('/controls/:workflowId/:stepId')
+./novu/apps/api/src/app/bridge/bridge.controller.ts:  @Put('/controls/:workflowId/:stepId')
+./novu/apps/api/src/app/bridge/bridge.controller.ts:  @Post('/validate')
+./novu/apps/api/src/app/analytics/analytics.controller.ts:  @Post('/measure')
+./novu/apps/api/src/app/analytics/analytics.controller.ts:  @Post('/identify')
+./novu/apps/api/src/app/activity/activity.controller.ts:  @Get('requests')
+./novu/apps/api/src/app/activity/activity.controller.ts:  @Get('requests/:requestId')
+./novu/apps/api/src/app/activity/activity.controller.ts:  @Get('workflow-runs')
+./novu/apps/api/src/app/activity/activity.controller.ts:  @Get('workflow-runs/:workflowRunId')
+./novu/apps/api/src/app/activity/activity.controller.ts:  @Get('charts')
+./novu/apps/api/src/app/blueprint/blueprint.controller.ts:  @Get('/group-by-category')
+./novu/apps/api/src/app/blueprint/blueprint.controller.ts:  @Get('/:templateIdOrIdentifier')
+./novu/apps/api/src/app/subscribers-v2/subscribers.controller.ts:  @Get('')
+./novu/apps/api/src/app/subscribers-v2/subscribers.controller.ts:  @Get('/:subscriberId')
+./novu/apps/api/src/app/subscribers-v2/subscribers.controller.ts:  @Post('')
+./novu/apps/api/src/app/subscribers-v2/subscribers.controller.ts:  @Patch('/:subscriberId')
+./novu/apps/api/src/app/subscribers-v2/subscribers.controller.ts:  @Delete('/:subscriberId')
+./novu/apps/api/src/app/subscribers-v2/subscribers.controller.ts:  @Get('/:subscriberId/preferences')
+./novu/apps/api/src/app/subscribers-v2/subscribers.controller.ts:  @Get('/:subscriberId/preferences/global')
+./novu/apps/api/src/app/subscribers-v2/subscribers.controller.ts:  @Patch('/:subscriberId/preferences/bulk')
+./novu/apps/api/src/app/subscribers-v2/subscribers.controller.ts:  @Patch('/:subscriberId/preferences')
+./novu/apps/api/src/app/subscribers-v2/subscribers.controller.ts:  @Get('/:subscriberId/subscriptions')
+./novu/apps/api/src/app/subscribers-v2/subscribers.controller.ts:  @Get('/:subscriberId/notifications')
+./novu/apps/api/src/app/subscribers-v2/subscribers.controller.ts:  @Get('/:subscriberId/notifications/count')
+./novu/apps/api/src/app/subscribers-v2/subscribers.controller.ts:  @Patch('/:subscriberId/notifications/:notificationId/read')
+./novu/apps/api/src/app/subscribers-v2/subscribers.controller.ts:  @Patch('/:subscriberId/notifications/:notificationId/unread')
+./novu/apps/api/src/app/subscribers-v2/subscribers.controller.ts:  @Patch('/:subscriberId/notifications/:notificationId/archive')
+./novu/apps/api/src/app/subscribers-v2/subscribers.controller.ts:  @Patch('/:subscriberId/notifications/:notificationId/unarchive')
+./novu/apps/api/src/app/subscribers-v2/subscribers.controller.ts:  @Patch('/:subscriberId/notifications/:notificationId/snooze')
+./novu/apps/api/src/app/subscribers-v2/subscribers.controller.ts:  @Patch('/:subscriberId/notifications/:notificationId/unsnooze')
+./novu/apps/api/src/app/subscribers-v2/subscribers.controller.ts:  @Delete('/:subscriberId/notifications/:notificationId')
+./novu/apps/api/src/app/subscribers-v2/subscribers.controller.ts:  @Patch('/:subscriberId/notifications/:notificationId/actions/:actionType/complete')
+./novu/apps/api/src/app/subscribers-v2/subscribers.controller.ts:  @Patch('/:subscriberId/notifications/:notificationId/actions/:actionType/revert')
+./novu/apps/api/src/app/subscribers-v2/subscribers.controller.ts:  @Post('/:subscriberId/notifications/seen')
+./novu/apps/api/src/app/subscribers-v2/subscribers.controller.ts:  @Post('/:subscriberId/notifications/read')
+./novu/apps/api/src/app/subscribers-v2/subscribers.controller.ts:  @Post('/:subscriberId/notifications/archive')
+./novu/apps/api/src/app/subscribers-v2/subscribers.controller.ts:  @Post('/:subscriberId/notifications/read-archive')
+./novu/apps/api/src/app/subscribers-v2/subscribers.controller.ts:  @Post('/:subscriberId/notifications/delete')
+./novu/apps/api/src/app/step-resolvers/step-resolvers.controller.ts:  @Get('/count')
+./novu/apps/api/src/app/step-resolvers/step-resolvers.controller.ts:  @Post('/deploy')
+./novu/apps/api/src/app/step-resolvers/step-resolvers.controller.ts:  @Delete('/:stepInternalId/disconnect')
+./novu/apps/api/src/app/execution-details/execution-details.controller.ts:  @Get('/')
+./novu/apps/api/src/app/invites/invites.controller.ts:  @Get('/:inviteToken')
+./novu/apps/api/src/app/invites/invites.controller.ts:  @Post('/:inviteToken/accept')
+./novu/apps/api/src/app/invites/invites.controller.ts:  @Post('/')
+./novu/apps/api/src/app/invites/invites.controller.ts:  @Post('/resend')
+./novu/apps/api/src/app/invites/invites.controller.ts:  @Post('/bulk')
+./novu/apps/api/src/app/user/user.controller.ts:  @Get('/me')
+./novu/apps/api/src/app/user/user.controller.ts:  @Put('/profile/email')
+./novu/apps/api/src/app/user/user.controller.ts:  @Put('/onboarding')
+./novu/apps/api/src/app/user/user.controller.ts:  @Put('/onboarding-tour')
+./novu/apps/api/src/app/user/user.controller.ts:  @Put('/profile')
+./novu/apps/api/src/app/notification-groups/notification-groups.controller.ts:  @Post('')
+./novu/apps/api/src/app/notification-groups/notification-groups.controller.ts:  @Get('')
+./novu/apps/api/src/app/notification-groups/notification-groups.controller.ts:  @Get('/:id')
+./novu/apps/api/src/app/notification-groups/notification-groups.controller.ts:  @Patch('/:id')
+./novu/apps/api/src/app/notification-groups/notification-groups.controller.ts:  @Delete('/:id')
+./novu/apps/api/src/app/layouts-v2/layouts.controller.ts:  @Post('')
+./novu/apps/api/src/app/layouts-v2/layouts.controller.ts:  @Put(':layoutId')
+./novu/apps/api/src/app/layouts-v2/layouts.controller.ts:  @Get(':layoutId')
+./novu/apps/api/src/app/layouts-v2/layouts.controller.ts:  @Delete(':layoutId')
+./novu/apps/api/src/app/layouts-v2/layouts.controller.ts:  @Post(':layoutId/duplicate')
+./novu/apps/api/src/app/layouts-v2/layouts.controller.ts:  @Get('')
+./novu/apps/api/src/app/layouts-v2/layouts.controller.ts:  @Post(':layoutId/preview')
+./novu/apps/api/src/app/layouts-v2/layouts.controller.ts:  @Get(':layoutId/usage')
+./novu/apps/api/src/app/workflows-v2/workflow.controller.ts:  @Post('')
+./novu/apps/api/src/app/workflows-v2/workflow.controller.ts:  @Put(':workflowId/sync')
+./novu/apps/api/src/app/workflows-v2/workflow.controller.ts:  @Put(':workflowId')
+./novu/apps/api/src/app/workflows-v2/workflow.controller.ts:  @Get(':workflowId')
+./novu/apps/api/src/app/workflows-v2/workflow.controller.ts:  @Delete(':workflowId')
+./novu/apps/api/src/app/workflows-v2/workflow.controller.ts:  @Get('')
+./novu/apps/api/src/app/workflows-v2/workflow.controller.ts:  @Post(':workflowId/duplicate')
+./novu/apps/api/src/app/workflows-v2/workflow.controller.ts:  @Post('/:workflowId/step/:stepId/preview')
+./novu/apps/api/src/app/workflows-v2/workflow.controller.ts:  @Post('/steps/test-http-request')
+./novu/apps/api/src/app/workflows-v2/workflow.controller.ts:  @Get('/:workflowId/steps/:stepId')
+./novu/apps/api/src/app/workflows-v2/workflow.controller.ts:  @Patch('/:workflowId')
+./novu/apps/api/src/app/workflows-v2/workflow.controller.ts:  @Get('/:workflowId/test-data')
+./novu/apps/api/src/app/inbound-parse/inbound-parse.controller.ts:  @Get('/mx/status')
+./novu/apps/api/src/app/connect/connect.controller.ts:  @Post('/claim')
+./novu/apps/api/src/app/integrations/integrations-public.controller.ts:  @Get('/status')
+./novu/apps/api/src/app/integrations/integrations-public.controller.ts:  @Post('/')
+./novu/apps/api/src/app/integrations/usecases/msteams-health-check/msteams-health-check.usecase.ts:      const response = await axios.get<{ value: unknown[] }>(
+./novu/apps/api/src/app/integrations/usecases/msteams-health-check/msteams-health-check.usecase.ts:      const spResponse = await axios.get<{ value: Array<{ id: string }> }>(
+./novu/apps/api/src/app/integrations/usecases/msteams-health-check/msteams-health-check.usecase.ts:      const assignmentsResponse = await axios.get<{ value: Array<{ appRoleId: string }> }>(
+./novu/apps/api/src/app/integrations/usecases/azure-setup-oauth-callback/azure-setup-oauth-callback.usecase.ts:      const response = await axios.post<{ access_token: string; refresh_token?: string }>(
+./novu/apps/api/src/app/integrations/usecases/azure-setup-oauth-callback/azure-setup-oauth-callback.usecase.ts:    const response = await axios.post<{ access_token: string }>(
+./novu/apps/api/src/app/integrations/usecases/azure-setup-oauth-callback/azure-setup-oauth-callback.usecase.ts:      const appResponse = await axios.post<{ id: string; appId: string }>(
+./novu/apps/api/src/app/integrations/usecases/azure-setup-oauth-callback/azure-setup-oauth-callback.usecase.ts:      const spResponse = await axios.post<{ id: string; appOwnerOrganizationId: string }>(
+./novu/apps/api/src/app/integrations/usecases/azure-setup-oauth-callback/azure-setup-oauth-callback.usecase.ts:      const secretResponse = await axios.post<{ secretText: string }>(
+./novu/apps/api/src/app/integrations/usecases/azure-setup-oauth-callback/azure-setup-oauth-callback.usecase.ts:      const graphSpResponse = await axios.get<{ value: Array<{ id: string }> }>(
+./novu/apps/api/src/app/integrations/usecases/azure-setup-oauth-callback/azure-setup-oauth-callback.usecase.ts:        await axios.post(
+./novu/apps/api/src/app/integrations/usecases/azure-setup-oauth-callback/azure-setup-oauth-callback.usecase.ts:      const response = await axios.get<{ value: Array<{ id: string }> }>(`${MS_GRAPH_BASE_URL}/organization`, {
+./novu/apps/api/src/app/integrations/usecases/azure-setup-oauth-callback/azure-setup-oauth-callback.usecase.ts:        await axios.put(
+./novu/apps/api/src/app/integrations/usecases/azure-setup-oauth-callback/azure-setup-oauth-callback.usecase.ts:        await axios.put(
+./novu/apps/api/src/app/integrations/usecases/azure-setup-oauth-callback/azure-setup-oauth-callback.usecase.ts:        await axios.put(
+./novu/apps/api/src/app/integrations/usecases/azure-setup-oauth-callback/azure-setup-oauth-callback.usecase.ts:      const response = await axios.get<{ value: Array<{ subscriptionId: string; state: string }> }>(
+./novu/apps/api/src/app/integrations/usecases/azure-setup-oauth-callback/azure-setup-oauth-callback.usecase.ts:      const response = await axios.post<{ id: string }>(`${MS_GRAPH_BASE_URL}/appCatalogs/teamsApps`, zip, {
+./novu/apps/api/src/app/integrations/usecases/slack-quick-setup/slack-quick-setup.usecase.ts:      const response = await axios.post<SlackManifestCreateResponse>(
+./novu/apps/api/src/app/integrations/usecases/chat-oauth-callback/slack-oauth-callback/slack-oauth-callback.usecase.ts:    const res = await axios.post(this.SLACK_ACCESS_URL, body, config);
+./novu/apps/api/src/app/integrations/usecases/chat-oauth-callback/msteams-oauth-callback/msteams-oauth-callback.usecase.ts:      response = await axios.get(url, {
+./novu/apps/api/src/app/integrations/usecases/chat-oauth-callback/msteams-oauth-callback/msteams-oauth-callback.usecase.ts:      await axios.post(url, body, {
+./novu/apps/api/src/app/integrations/usecases/chat-oauth-callback/msteams-oauth-callback/msteams-oauth-callback.usecase.ts:    const response = await axios.post(
+./novu/apps/api/src/app/integrations/integrations.controller.ts:  @Get('/')
+./novu/apps/api/src/app/integrations/integrations.controller.ts:  @Get('/active')
+./novu/apps/api/src/app/integrations/integrations.controller.ts:  @Get('/webhook/provider/:providerOrIntegrationId/status')
+./novu/apps/api/src/app/integrations/integrations.controller.ts:  @Post('/')
+./novu/apps/api/src/app/integrations/integrations.controller.ts:  @Put('/:integrationId')
+./novu/apps/api/src/app/integrations/integrations.controller.ts:  @Post('/:integrationId/auto-configure')
+./novu/apps/api/src/app/integrations/integrations.controller.ts:  @Post('/:integrationId/set-primary')
+./novu/apps/api/src/app/integrations/integrations.controller.ts:  @Delete('/:integrationId')
+./novu/apps/api/src/app/integrations/integrations.controller.ts:  @Get('/:channelType/limit')
+./novu/apps/api/src/app/integrations/integrations.controller.ts:  @Get('/in-app/status')
+./novu/apps/api/src/app/integrations/integrations.controller.ts:  @Get('/:integrationId/msteams-arm-template/deploy-url')
+./novu/apps/api/src/app/integrations/integrations.controller.ts:  @Get('/:integrationId/msteams-arm-template')
+./novu/apps/api/src/app/integrations/integrations.controller.ts:  @Get('/:integrationId/msteams-azure-setup/oauth-url')
+./novu/apps/api/src/app/integrations/integrations.controller.ts:  @Get('/:integrationId/msteams-health')
+./novu/apps/api/src/app/integrations/integrations.controller.ts:  @Get('/chat/oauth/azure-setup/callback')
+./novu/apps/api/src/app/integrations/integrations.controller.ts:  @Post('/chat/oauth')
+./novu/apps/api/src/app/integrations/integrations.controller.ts:  @Post('/channel-connections/oauth')
+./novu/apps/api/src/app/integrations/integrations.controller.ts:  @Post('/channel-endpoints/oauth')
+./novu/apps/api/src/app/integrations/integrations.controller.ts:  @Get('/chat/oauth/callback')
+./novu/apps/api/src/app/integrations/integrations.controller.ts:  @Post('/whatsapp/validate-token')
+./novu/apps/api/src/app/integrations/integrations.controller.ts:  @Post('/telegram/mobile-link')
+./novu/apps/api/src/app/integrations/integrations.controller.ts:  @Post('/:integrationId/slack-quick-setup')
+./novu/apps/api/src/app/workflows-v1/notification-template.controller.ts:  @Get('')
+./novu/apps/api/src/app/workflows-v1/notification-template.controller.ts:  @Put('/:templateId')
+./novu/apps/api/src/app/workflows-v1/notification-template.controller.ts:  @Delete('/:templateId')
+./novu/apps/api/src/app/workflows-v1/notification-template.controller.ts:  @Get('/:workflowIdOrIdentifier')
+./novu/apps/api/src/app/workflows-v1/notification-template.controller.ts:  @Post('')
+./novu/apps/api/src/app/workflows-v1/notification-template.controller.ts:  @Put('/:templateId/status')
+./novu/apps/api/src/app/workflows-v1/workflow-v1.controller.ts:  @Get('')
+./novu/apps/api/src/app/workflows-v1/workflow-v1.controller.ts:  @Put('/:workflowId')
+./novu/apps/api/src/app/workflows-v1/workflow-v1.controller.ts:  @Delete('/:workflowId')
+./novu/apps/api/src/app/workflows-v1/workflow-v1.controller.ts:  @Get('/variables')
+./novu/apps/api/src/app/workflows-v1/workflow-v1.controller.ts:  @Get('/:workflowId')
+./novu/apps/api/src/app/workflows-v1/workflow-v1.controller.ts:  @Post('')
+./novu/apps/api/src/app/workflows-v1/workflow-v1.controller.ts:  @Put('/:workflowId/status')
+./novu/apps/api/src/app/change/changes.controller.ts:  @Get('/')
+./novu/apps/api/src/app/change/changes.controller.ts:  @Get('/count')
+./novu/apps/api/src/app/change/changes.controller.ts:  @Post('/bulk/apply')
+./novu/apps/api/src/app/change/changes.controller.ts:  @Post('/:changeId/apply')
+./novu/apps/api/src/app/health/health.controller.ts:  @Get()
+./novu/apps/api/src/app/health/health.controller.ts:  @Post('/test-idempotency')
+./novu/apps/api/src/app/health/health.controller.ts:  @Get('/test-idempotency')
+./novu/apps/api/src/app/partner-integrations/partner-integrations.controller.ts:  @Post('/vercel')
+./novu/apps/api/src/app/partner-integrations/partner-integrations.controller.ts:  @Put('/vercel')
+./novu/apps/api/src/app/partner-integrations/partner-integrations.controller.ts:  @Get('/vercel/:configurationId')
+./novu/apps/api/src/app/partner-integrations/partner-integrations.controller.ts:  @Get('/vercel/:configurationId/projects')
+./novu/apps/api/src/app/partner-integrations/partner-integrations.controller.ts:  @Post('/vercel/webhook')
+./novu/apps/api/src/app/testing/testing.controller.ts:  @Get('/product-feature')
+./novu/apps/api/src/app/testing/testing.controller.ts:  @Get('/resource-limiting-default')
+./novu/apps/api/src/app/testing/testing.controller.ts:  @Get('/resource-limiting-events')
+./novu/apps/api/src/app/testing/auth.controller.ts:  @Get('/user-route')
+./novu/apps/api/src/app/testing/auth.controller.ts:  @Get('/user-api-inaccessible-route')
+./novu/apps/api/src/app/testing/auth.controller.ts:  @Get('/permission-route')
+./novu/apps/api/src/app/testing/auth.controller.ts:  @Get('/no-permission-route')
+./novu/apps/api/src/app/testing/auth.controller.ts:  @Get('/all-permissions-route')
+./novu/apps/api/src/app/testing/rate-limiting.controller.ts:  @Get('/no-category-no-cost')
+./novu/apps/api/src/app/testing/rate-limiting.controller.ts:  @Get('/no-category-single-cost')
+./novu/apps/api/src/app/testing/rate-limiting.controller.ts:  @Get('/global-category-no-cost')
+./novu/apps/api/src/app/testing/rate-limiting.controller.ts:  @Get('/global-category-single-cost')
+./novu/apps/api/src/app/testing/rate-limiting.controller.ts:  @Get('/global-category-bulk-cost')
+./novu/apps/api/src/app/testing/rate-limiting.controller.ts:  @Get('/trigger-category-no-cost')
+./novu/apps/api/src/app/testing/rate-limiting.controller.ts:  @Get('/trigger-category-single-cost')
+./novu/apps/api/src/app/testing/rate-limiting.controller.ts:  @Get('/trigger-category-bulk-cost')
+./novu/apps/api/src/app/testing/rate-limiting.controller.ts:  @Get('/no-category-no-cost-override')
+./novu/apps/api/src/app/testing/rate-limiting.controller.ts:  @Get('/no-category-single-cost-override')
+./novu/apps/api/src/app/testing/rate-limiting.controller.ts:  @Get('/global-category-no-cost-override')
+./novu/apps/ws/src/app.controller.ts:  @Get()
+./novu/apps/ws/src/health/health.controller.ts:  @Get()
+./novu/packages/framework/src/servers/nest/nest.controller.ts:  @Get()
+./novu/packages/framework/src/servers/nest/nest.controller.ts:  @Post()
+./novu/packages/providers/src/lib/email/mailgun/mailgun.provider.ts:        const response = await axios.get(`${baseUrl}/v5/accounts/http_signing_key`, {
+./novu/packages/providers/src/lib/sms/unifonic/unifonic.provider.ts:    const response = await axios.post('https://el.cloud.unifonic.com/rest/SMS/messages', qs.stringify(payload.body), {
+./novu/packages/providers/src/lib/sms/afro-sms/afro-sms.provider.ts:    const { data } = await axios.get(url, {
+./novu/packages/providers/src/lib/sms/isendpro-sms/isendpro-sms.provider.ts:    const response = await axios.post(`${this.DEFAULT_BASE_URL}/sms`, params, {
+./novu/packages/providers/src/lib/sms/isendpro-sms/isendpro-sms.test.provider.spec.ts:  (axios.post as any).mockResolvedValueOnce({ data: { id: 'abc123' } });
+./novu/packages/providers/src/lib/sms/isendpro-sms/isendpro-sms.test.provider.spec.ts:  expect(axios.post).toHaveBeenCalledWith('https://apirest.isendpro.com/cgi-bin/sms', expect.any(URLSearchParams), {
+./novu/packages/providers/src/lib/sms/isendpro-sms/isendpro-sms.test.provider.spec.ts:  const params = (axios.post as any).mock.calls[0][1] as URLSearchParams;
+./novu/packages/providers/src/lib/sms/isendpro-sms/isendpro-sms.test.provider.spec.ts:  (axios.post as any).mockResolvedValueOnce({ data: { id: 'abc123' } });
+./novu/packages/providers/src/lib/sms/isendpro-sms/isendpro-sms.test.provider.spec.ts:  expect(axios.post).toHaveBeenCalled();
+./novu/packages/providers/src/lib/sms/isendpro-sms/isendpro-sms.test.provider.spec.ts:  const params = (axios.post as any).mock.calls[0][1] as URLSearchParams;
+./novu/packages/providers/src/lib/sms/cm-telecom/cm-telecom.provider.spec.ts:      vi.mocked(axios.post).mockResolvedValue(mockResponse);
+./novu/packages/providers/src/lib/sms/cm-telecom/cm-telecom.provider.spec.ts:      expect(axios.post).toHaveBeenCalledWith(
+./novu/packages/providers/src/lib/sms/cm-telecom/cm-telecom.provider.spec.ts:      vi.mocked(axios.post).mockResolvedValue(mockResponse);
+./novu/packages/providers/src/lib/sms/cm-telecom/cm-telecom.provider.spec.ts:      expect(axios.post).toHaveBeenCalledWith(
+./novu/packages/providers/src/lib/sms/cm-telecom/cm-telecom.provider.spec.ts:      vi.mocked(axios.post).mockResolvedValue(mockResponse);
+./novu/packages/providers/src/lib/sms/cm-telecom/cm-telecom.provider.spec.ts:      expect(axios.post).toHaveBeenCalledWith(
+./novu/packages/providers/src/lib/sms/cm-telecom/cm-telecom.provider.spec.ts:      vi.mocked(axios.post).mockResolvedValue(mockResponse);
+./novu/packages/providers/src/lib/sms/cm-telecom/cm-telecom.provider.spec.ts:      expect(axios.post).toHaveBeenCalledWith(
+./novu/packages/providers/src/lib/sms/cm-telecom/cm-telecom.provider.spec.ts:      vi.mocked(axios.post).mockResolvedValue(mockResponse);
+./novu/packages/providers/src/lib/sms/cm-telecom/cm-telecom.provider.spec.ts:      expect(axios.post).toHaveBeenCalledWith(
+./novu/packages/providers/src/lib/sms/cm-telecom/cm-telecom.provider.ts:    const { data } = await axios.post(this.BASE_URL, payload.body, {
+./novu/packages/providers/src/lib/sms/sinch/sinch.provider.spec.ts:      vi.mocked(axios.post).mockResolvedValue(mockResponse);
+./novu/packages/providers/src/lib/sms/sinch/sinch.provider.spec.ts:      expect(axios.post).toHaveBeenCalledWith(
+./novu/packages/providers/src/lib/sms/sinch/sinch.provider.spec.ts:      vi.mocked(axios.post).mockResolvedValue(mockResponse);
+./novu/packages/providers/src/lib/sms/sinch/sinch.provider.spec.ts:      expect(axios.post).toHaveBeenCalledWith(
+./novu/packages/providers/src/lib/sms/sinch/sinch.provider.spec.ts:      vi.mocked(axios.post).mockResolvedValue(mockResponse);
+./novu/packages/providers/src/lib/sms/sinch/sinch.provider.spec.ts:      expect(axios.post).toHaveBeenCalledWith(
+./novu/packages/providers/src/lib/sms/sinch/sinch.provider.ts:    const response = await axios.post(url, payload, {
+./novu/packages/novu/src/commands/sync.spec.ts:      (axios.post as MockedFunction<typeof axios.post>).mockResolvedValueOnce({
+./novu/packages/novu/src/commands/sync.spec.ts:      (axios.post as MockedFunction<typeof axios.post>).mockRejectedValueOnce(new Error('Network error'));
+./novu/packages/novu/src/commands/sync.spec.ts:      (axios.get as MockedFunction<typeof axios.get>).mockResolvedValueOnce({ data: {} });
+./novu/packages/novu/src/commands/sync.spec.ts:      (axios.post as MockedFunction<typeof axios.post>).mockImplementationOnce(() => {
+./novu/packages/novu/src/commands/sync.ts:  return await axios.post(
+./novu/packages/novu/src/commands/sync.ts:    const discoverRes = await axios.get<DiscoverResponse>(discoverUrl, { timeout: 5000 });
+./novu/packages/novu/src/commands/sync.ts:        axios.put(
+./novu/packages/novu/src/commands/translations/client.ts:      const response = await axios.get(`${this.apiUrl}/v2/translations/master-json`, {
+./novu/packages/novu/src/commands/translations/client.ts:      const response = await axios.post(`${this.apiUrl}/v2/translations/master-json/upload`, formData, {
+./novu/packages/novu/src/commands/translations/client.ts:      await axios.get(`${this.apiUrl}/v1/users/me`, {
+./novu/packages/novu/src/commands/translations/client.ts:      const response = await axios.get(`${this.apiUrl}/v1/organizations/settings`, {
+./novu/packages/novu/src/commands/connect/api/integrations.ts:  const res = await client.axios.get<{ data?: IntegrationRecord[] } | IntegrationRecord[]>('/v1/integrations');
+./novu/packages/novu/src/commands/connect/api/integrations.ts:  await client.axios.post('/v1/agents/verify-credentials', {
+./novu/packages/novu/src/commands/connect/api/integrations.ts:  const res = await client.axios.post<{ data?: IntegrationRecord } | IntegrationRecord>('/v1/integrations', {
+./novu/packages/novu/src/commands/connect/api/integrations.ts:  await client.axios.delete(`/v1/integrations/${encodeURIComponent(integrationId)}`);
+./novu/packages/novu/src/commands/connect/api/integrations.ts:  const res = await client.axios.post<{ data?: IntegrationRecord } | IntegrationRecord>('/v1/integrations', {
+./novu/packages/novu/src/commands/connect/api/integrations.ts:  const res = await client.axios.post<{ data?: IntegrationRecord } | IntegrationRecord>('/v1/integrations', {
+./novu/packages/novu/src/commands/connect/api/integrations.ts:  await client.axios.post(`/v1/integrations/${encodeURIComponent(integrationId)}/slack-quick-setup`, {
+./novu/packages/novu/src/commands/connect/api/integrations.ts:  const res = await client.axios.get<{
+./novu/packages/novu/src/commands/connect/api/integrations.ts:  const res = await client.axios.post<{ data?: { url?: string } } | { url?: string } | string>(
+./novu/packages/novu/src/commands/connect/api/agents.ts:  const res = await client.axios.get<{ data?: AgentRecord[] } | AgentRecord[]>('/v1/agents');
+./novu/packages/novu/src/commands/connect/api/agents.ts:  const res = await client.axios.post<{ data?: GeneratedAgentSpec } | GeneratedAgentSpec>('/v1/agents/generate', {
+./novu/packages/novu/src/commands/connect/api/agents.ts:  const res = await client.axios.post<{ data?: AgentRecord } | AgentRecord>('/v1/agents', {
+./novu/packages/novu/src/commands/connect/api/agents.ts:  const res = await client.axios.post<{ data?: AgentIntegrationLink } | AgentIntegrationLink>(
+./novu/packages/novu/src/commands/connect/api/agents.ts:  const res = await client.axios.post<{ data?: AgentIntegrationLink } | AgentIntegrationLink>(
+./novu/packages/novu/src/commands/connect/api/agents.ts:  const res = await client.axios.get<{ data?: AgentIntegrationLink[] } | AgentIntegrationLink[]>(
+./novu/packages/novu/src/commands/connect/api/agents.ts:  const res = await client.axios.post<{ data?: SendAgentWelcomeMessageResult } | SendAgentWelcomeMessageResult>(
+./novu/packages/novu/src/commands/connect/api/agents.ts:  const res = await client.axios.post<{ data?: TelegramConfigureResult } | TelegramConfigureResult>(
+./novu/packages/novu/src/commands/connect/api/agents.ts:  const res = await client.axios.post<{ data?: TelegramMobileLinkResult } | TelegramMobileLinkResult>(
+./novu/packages/novu/src/commands/connect/api/agents.ts:  const res = await client.axios.get<{ data?: TelegramMobileLinkStatus } | TelegramMobileLinkStatus>(
+./novu/packages/novu/src/commands/connect/api/agents.ts:  const res = await client.axios.post<{ data?: ConsumeTelegramMobileLinkResult } | ConsumeTelegramMobileLinkResult>(
+./novu/packages/novu/src/commands/connect/api/agents.ts:  const res = await client.axios.post<{ data?: SlackSetupLinkResult } | SlackSetupLinkResult>(
+./novu/packages/novu/src/commands/connect/api/agents.ts:  const res = await client.axios.get<{ data?: SlackSetupLinkStatus } | SlackSetupLinkStatus>(
+./novu/packages/novu/src/commands/connect/api/agents.ts:  const res = await client.axios.post<{ data?: TelegramSubscriberLinkResult } | TelegramSubscriberLinkResult>(
+./novu/packages/novu/src/commands/connect/api/keyless-session.ts:  const res = await axios.post<InboxSessionResponse>(
+./novu/packages/novu/src/commands/connect/api/subscribers.ts:  await client.axios.post('/v2/subscribers', {
+./novu/packages/novu/src/commands/step/api/client.ts:      await axios.get(`${this.apiUrl}/v1/users/me`, {
+./novu/packages/novu/src/commands/step/api/client.ts:      const response = await axios.get(`${this.apiUrl}/v1/environments/me`, {
+./novu/packages/novu/src/commands/step/api/client.ts:      const response = await axios.get(
+./novu/packages/novu/src/commands/step/api/client.ts:      const response = await axios.post(`${this.apiUrl}/v2/step-resolvers/deploy`, formData, {
+./novu/libs/application-generic/src/services/ms-teams-token.service.ts:    const response = await axios.post<{ access_token: string; expires_in: number }>(tokenUrl, body.toString(), {
+./novu/libs/testing/src/notifications.service.ts:    await axios.post(
+./workers/moodle-worker/src/main.ts:      const response = await axios.post(`${url}?${query.toString()}`);
