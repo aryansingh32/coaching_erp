@@ -97,14 +97,14 @@ test-report-chunk*.md
 # 5. Service-Specific Exclusions (third-party platform clones)
 # ─────────────────────────────────────────────────────────────────────────────
 # Run Moodle, ClickHouse, Metabase, ERPNext, etc. via Docker images — not from git.
-clickhouse/
-moodle/
-metabase/
-superset/
-erpnext/
-bigbluebutton/
-education/
-novu/
+/clickhouse/
+/moodle/
+/metabase/
+/superset/
+/erpnext/
+/bigbluebutton/
+/education/
+/novu/
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 6. IDEs, Editors & System Files
