@@ -37,7 +37,7 @@ export default function StudentHome() {
     enabled: !!erpId,
   })
 
-  const batches = (batchesRes as { data?: unknown[] })?.data ?? []
+  const batches = (batchesRes as { data?: { name?: string; student_group_name?: string }[] })?.data ?? []
   const fees = (feesRes as { data?: { amount: number }[] })?.data ?? []
   const pendingTotal = fees.reduce((s, f) => s + f.amount, 0)
 
@@ -48,7 +48,7 @@ export default function StudentHome() {
 
       <View style={styles.card}>
         <Text style={styles.cardTitle}>My Batches ({batches.length})</Text>
-        {batches.map((b: { name?: string; student_group_name?: string }, i: number) => (
+        {batches.map((b, i) => (
           <Text key={i} style={styles.item}>
             • {b.student_group_name ?? b.name ?? 'Batch'}
           </Text>

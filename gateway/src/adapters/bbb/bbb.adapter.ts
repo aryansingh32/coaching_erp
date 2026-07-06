@@ -7,7 +7,7 @@ import * as xml2js from 'xml2js';
 
 export interface LiveClassAdapter {
   createMeeting(meetingId: string, name: string, attendeePw: string, moderatorPw: string): Promise<any>;
-  getJoinUrl(meetingId: string, fullName: string, password: string): string;
+  getJoinUrl(meetingId: string, fullName: string, password: string, userData?: Record<string, string>): string;
   endMeeting(meetingId: string, moderatorPw: string): Promise<any>;
   getRecordings(meetingId: string): Promise<any>;
   createWebhook(callbackUrl: string): Promise<any>;
@@ -59,8 +59,15 @@ export class BbbAdapter implements LiveClassAdapter {
     });
   }
 
-  getJoinUrl(meetingId: string, fullName: string, password: string): string {
+  getJoinUrl(meetingId: string, fullName: string, password: string, userData?: Record<string, string>): string {
     const params = new URLSearchParams({ meetingID: meetingId, fullName, password });
+    
+    if (userData) {
+      Object.keys(userData).forEach(key => {
+        params.append(`userdata-${key}`, userData[key]);
+      });
+    }
+
     const query = params.toString();
     const checksum = this.generateChecksum('join', query);
     return `${this.apiUrl}join?${query}&checksum=${checksum}`;

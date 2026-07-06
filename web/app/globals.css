@@ -4,6 +4,7 @@
 
 @layer base {
   :root {
+    /* ─── shadcn/Radix base scale (light) ─────────────────────────────── */
     --background: 210 40% 98%;
     --foreground: 222.2 84% 4.9%;
 
@@ -34,31 +35,72 @@
 
     --radius: 0.5rem;
 
-    /* Institute Theme (Light Default) */
+    /* ─── Institute (Admin / Teacher) theme ───────────────────────────── */
+    /* Derived from ERPNext / Frappe UI Design System                     */
     --inst-bg-base: #F6F8FA;
     --inst-bg-surface: #FFFFFF;
-    --inst-border: #D0D7DE;
+    --inst-bg-muted: #F3F4F6;
+    --inst-border: #D1D5DB;
     --inst-text-primary: #1F2328;
-    
-    /* Default Institute Branding (can be overridden via JS per tenant) */
-    --inst-primary: 222.2 47.4% 11.2%; 
-    --inst-primary-light: hsla(222.2, 47.4%, 11.2%, 0.1);
-    
-    --inst-success: #1A7F37;
-    --inst-warning: #9A6700;
-    --inst-danger: #CF222E;
-    --inst-streak: #FFA657;
+    --inst-muted: #6B7280;
 
-    /* Platform Theme (Super Admin - Dark) */
-    --platform-bg-base: #0D1117;
-    --platform-bg-surface: #161B22;
-    --platform-bg-elevated: #21262D;
-    --platform-border: #30363D;
-    --platform-text-primary: #F0F6FC;
-    --platform-accent: #6E40C9;
-    --platform-success: #3FB950;
-    --platform-warning: #D29922;
-    --platform-danger: #F85149;
+    /* Overridden at runtime via useAuthStore branding.primaryColor */
+    --inst-primary: 238 82% 60%;           /* indigo-500 fallback */
+    --inst-primary-light: hsla(238, 82%, 60%, 0.1);
+
+    /* Metabase dynamically derived whitelabeling ramp */
+    --mb-color-100: color-mix(in srgb, hsl(var(--inst-primary)) 10%, white);
+    --mb-color-200: color-mix(in srgb, hsl(var(--inst-primary)) 20%, white);
+    --mb-color-300: color-mix(in srgb, hsl(var(--inst-primary)) 30%, white);
+    --mb-color-400: color-mix(in srgb, hsl(var(--inst-primary)) 40%, white);
+    --mb-color-500: hsl(var(--inst-primary));
+    --mb-color-600: color-mix(in srgb, hsl(var(--inst-primary)) 80%, black);
+    --mb-color-700: color-mix(in srgb, hsl(var(--inst-primary)) 60%, black);
+    --mb-color-800: color-mix(in srgb, hsl(var(--inst-primary)) 40%, black);
+    --mb-color-900: color-mix(in srgb, hsl(var(--inst-primary)) 20%, black);
+
+    --inst-success: #16A34A;
+    --inst-warning: #D97706;
+    --inst-danger: #DC2626;
+    --inst-streak: #F97316;
+
+    /* Attendance semantic tints */
+    --inst-present-bg: #BBF7D0;
+    --inst-absent-bg: #FEE2E2;
+    --inst-late-bg: #FEF3C7;
+
+    /* ─── Platform (Super Admin) theme — DARK ─────────────────────────── */
+    /* Derived from Novu restraint + Metabase Orion dark scale             */
+    --platform-bg-base: #0B1220;
+    --platform-bg-surface: #141B2E;
+    --platform-bg-elevated: #1C2540;
+    --platform-border: #293252;
+    --platform-text-primary: #F0F4FC;
+    --platform-muted: #8A93B2;
+    --platform-accent: #7C5CFF;
+    --platform-success: #22C55E;
+    --platform-warning: #F59E0B;
+    --platform-danger: #EF4444;
+
+    /* ─── Student / Parent theme ──────────────────────────────────────── */
+    /* Derived from Moodle Boost + ERPNext Student module                  */
+    --student-bg-base: #FAFBFC;
+    --student-accent: #3B82F6;
+    --student-accent-light: #DBEAFE;
+    --student-correct: #16A34A;
+    --student-incorrect: #DC2626;
+    --student-partial: #D97706;
+    --student-streak: #F97316;
+    --student-xp: #EAB308;
+
+    /* ─── BigBlueButton (Live Class) UI ───────────────────────────────── */
+    --bbb-navy: #06172A;
+    --bbb-warning: #ffdddd;
+    --font-scale-1: 0.875rem;
+    --font-scale-2: 1rem;
+    --font-scale-3: 1.25rem;
+    --font-scale-4: 1.5rem;
+    --font-scale-5: 2rem;
   }
 
   .dark {
@@ -98,5 +140,54 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+/* ─── Utility animations ──────────────────────────────────────────────────── */
+@layer utilities {
+  .animate-in {
+    animation: fadeIn 0.2s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-in.zoom-in-95 {
+    animation: zoomIn95 0.15s ease-out;
+  }
+
+  @keyframes zoomIn95 {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .animate-tilt {
+    animation: tiltIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  @keyframes tiltIn {
+    from {
+      opacity: 0;
+      transform: scale(0.5) rotateX(-30deg);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) rotateX(0deg);
+    }
   }
 }

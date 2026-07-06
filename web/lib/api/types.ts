@@ -172,3 +172,175 @@ export interface Instructor {
   email_address?: string
   status?: string
 }
+
+export interface NotificationLog {
+  id: string
+  event: string
+  tenant: string
+  channel: string
+  status: 'delivered' | 'failed' | 'pending'
+  timestamp: string
+}
+
+export interface NotificationPreferences {
+  email: boolean
+  sms: boolean
+  push: boolean
+  quietHours: {
+    enabled: boolean
+    start?: string
+    end?: string
+  }
+}
+
+export interface PaymentTransaction {
+  id: string
+  student_id: string
+  student_name?: string
+  amount: number
+  payment_mode: 'Cash' | 'UPI' | 'Cheque' | 'Online'
+  status: 'Completed' | 'Pending' | 'Failed'
+  reference_no?: string
+  date: string
+}
+
+export interface MoodleAssignment {
+  id: number
+  course: number
+  name: string
+  intro?: string
+  duedate: number
+  allowsubmissionsfromdate: number
+  cutoffdate: number
+  gradingduedate?: number
+  maxgrade?: number
+}
+
+export interface MoodleForum {
+  id: number
+  course: number
+  type: string // 'general', 'single', 'eachuser', 'qanda'
+  name: string
+  intro?: string
+}
+
+export interface MoodleDiscussion {
+  id: number
+  name: string
+  groupid: number
+  timemodified: number
+  usermodified: number
+  timestart: number
+  timeend: number
+  discussion: number
+  parent: number
+  userid: number
+  created: number
+  modified: number
+  mailed: number
+  subject: string
+  message: string
+  messageformat: number
+  messagetrust: number
+  attachment: string
+  totalscore: number
+  mailnow: number
+  userfullname: string
+  usermodifiedfullname: string
+  userpictureurl: string
+  usermodifiedpictureurl: string
+  numreplies: number
+  numunread: number
+  pinned: boolean
+  locked: boolean
+}
+
+export interface MoodleSubmission {
+  id: number
+  userid: number
+  attemptnumber: number
+  timecreated: number
+  timemodified: number
+  status: string // 'new', 'draft', 'submitted'
+  groupid: number
+  assignment?: number
+  latest?: number
+  plugins?: Array<{
+    type: string // 'file', 'onlinetext'
+    name: string
+    fileareas?: Array<{
+      area: string
+      files: Array<{
+        filename: string
+        filepath: string
+        filesize: number
+        fileurl: string
+        timemodified: number
+        mimetype: string
+      }>
+    }>
+    editorfields?: Array<{
+      name: string
+      description: string
+      text: string
+      format: number
+    }>
+  }>
+}
+
+export interface GradeItem {
+  id: number
+  itemname: string
+  itemtype: string
+  itemmodule: string
+  iteminstance: number
+  itemnumber: number
+  idnumber: string
+  categoryid: number
+  outcomeid: number
+  scaleid: number
+  fallbackgrades: number
+  gradepass: number
+  grademax: number
+  grademin: number
+  hidden: boolean
+  locked: boolean
+  grades?: Array<{
+    userid: number
+    grade: number
+    locked: boolean
+    hidden: boolean
+    overridden: boolean
+    feedback: string
+    feedbackformat: number
+    usermodified: number
+    dategraded: number
+    datesubmitted: number
+  }>
+}
+
+export interface SchoolDiaryEntry {
+  name: string
+  date: string
+  title: string
+  content: string
+  published: boolean
+  instructor_name?: string
+  student_group?: string
+}
+
+export interface HelpCategory {
+  name: string
+  category_name: string
+  description?: string
+  icon?: string
+}
+
+export interface HelpArticle {
+  name: string
+  title: string
+  category: string
+  content: string
+  published: boolean
+  author?: string
+}

@@ -26,6 +26,7 @@ import { LmsModule } from './modules/lms/lms.module';
 import { EducationPortalModule } from './modules/education-portal/education-portal.module';
 import { ProxyModule } from './modules/proxy/proxy.module';
 import { SuperadminModule } from './modules/superadmin/superadmin.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 import { AuditModule } from './shared/audit/audit.module';
 import { FeaturesModule } from './shared/feature-flags/features.module';
 import {
@@ -139,6 +140,7 @@ import {
     SuperadminModule,
     AuditModule,
     FeaturesModule,
+    NotificationsModule,
   ],
 })
 export class AppModule {}

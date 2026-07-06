@@ -1,10 +1,11 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import {
   Home, BookOpen, Clock, User, LogOut, ClipboardList, CalendarDays,
-  IndianRupee, Video,
+  IndianRupee, Video, Menu, X
 } from "lucide-react"
 import { AuthGuard } from "@/components/auth/auth-guard"
 import { useAuthStore } from "@/lib/stores/auth-store"
@@ -22,8 +23,8 @@ type NavItem = {
 const studentNavItems: NavItem[] = [
   { href: '/learn', label: 'Home', icon: Home },
   { href: '/learn/courses', label: 'Courses', icon: BookOpen },
-  { href: '/learn/tests', label: 'Tests', icon: ClipboardList, feature: 'online_tests' as const },
   { href: '/learn/schedule', label: 'Schedule', icon: CalendarDays },
+  { href: '/learn/tests', label: 'Tests', icon: ClipboardList, feature: 'online_tests' as const },
   { href: '/learn/timeline', label: 'Timeline', icon: Clock },
   { href: '/learn/recordings', label: 'Recordings', icon: Video, feature: 'recordings' as const },
   { href: '/learn/profile', label: 'Profile', icon: User },
@@ -43,6 +44,8 @@ export default function LearnLayout({ children }: { children: React.ReactNode })
   const onlineTestsEnabled = useFeatureEnabled('online_tests')
   const recordingsEnabled = useFeatureEnabled('recordings')
   const notificationsEnabled = useFeatureEnabled('notifications')
+  
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false)
 
   const handleLogout = () => {
     logout()
@@ -56,13 +59,16 @@ export default function LearnLayout({ children }: { children: React.ReactNode })
     return true
   })
 
+  const primaryItems = navItems.slice(0, 3)
+  const moreItems = navItems.slice(3)
   const portalLabel = role === 'parent' ? 'Parent Portal' : 'Student Portal'
 
   return (
     <AuthGuard allowedRoles={['student', 'parent']}>
       <div className="dark min-h-screen bg-background text-foreground flex flex-col md:flex-row">
+        {/* Mobile Nav */}
         <nav className="md:hidden fixed bottom-0 w-full bg-card border-t border-border flex justify-around items-center h-16 z-50">
-          {navItems.map((item) => (
+          {primaryItems.map((item) => (
             <Link
               key={`${item.href}-${item.label}`}
               href={item.href}
@@ -76,7 +82,45 @@ export default function LearnLayout({ children }: { children: React.ReactNode })
               <span className="text-[10px]">{item.label}</span>
             </Link>
           ))}
+          {moreItems.length > 0 && (
+            <button
+              onClick={() => setMoreMenuOpen(!moreMenuOpen)}
+              className={`flex flex-col items-center transition-colors ${
+                moreMenuOpen ? 'text-primary' : 'text-muted-foreground hover:text-primary'
+              }`}
+            >
+              <Menu className="w-5 h-5 mb-1" />
+              <span className="text-[10px]">More</span>
+            </button>
+          )}
         </nav>
+
+        {/* Mobile More Drawer */}
+        {moreMenuOpen && (
+          <div className="md:hidden fixed inset-0 z-40 flex flex-col justify-end bg-black/50">
+            <div className="bg-card w-full rounded-t-xl p-4 mb-16 animate-in slide-in-from-bottom-full">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-semibold text-lg">More Menu</h3>
+                <button onClick={() => setMoreMenuOpen(false)} className="p-2 text-muted-foreground">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                {moreItems.map((item) => (
+                  <Link
+                    key={`${item.href}-${item.label}`}
+                    href={item.href}
+                    onClick={() => setMoreMenuOpen(false)}
+                    className="flex flex-col items-center p-3 rounded-lg bg-accent/30 hover:bg-accent/50 transition-colors"
+                  >
+                    <item.icon className="w-6 h-6 mb-2 text-primary" />
+                    <span className="text-xs text-center">{item.label}</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         <aside className="hidden md:flex flex-col w-64 bg-card border-r border-border min-h-screen p-6">
           <div className="flex items-center space-x-3 mb-10">

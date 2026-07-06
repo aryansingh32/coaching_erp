@@ -76,72 +76,87 @@ async function bootstrap() {
 
   console.log('Listening for events...');
 
-  // Subscribe to students
-  const studentSub = await js.pullSubscribe('student.>', {
-    config: { durable_name: 'moodle-worker-student' }
-  });
-
-  (async () => {
-    for await (const msg of studentSub) {
+  const startStudentSub = async () => {
+    while (true) {
       try {
-        const payload = JSON.parse(sc.decode(msg.data));
-        console.log(`Received ${msg.subject}:`, payload);
-        
-        if (msg.subject === 'student.created') {
-           console.log(`Creating Moodle user for ${payload.erpId}`);
-           await moodle.call('core_user_create_users', {
-             'users[0][username]': (payload.erpId || payload.name).toLowerCase(),
-             'users[0][password]': 'Changeme@123',
-             'users[0][firstname]': payload.first_name || 'Student',
-             'users[0][lastname]': payload.last_name || payload.erpId || payload.name,
-             'users[0][email]': payload.student_email_id || `${payload.erpId || payload.name}@example.com`,
-           });
+        const studentSub = await js.pullSubscribe('student.>', {
+          config: { durable_name: 'moodle-worker-student' }
+        });
+
+        const pullInterval = setInterval(() => {
+          studentSub.pull({ batch: 10, expires: 5000 });
+        }, 1000);
+
+        for await (const msg of studentSub) {
+          try {
+            const payload = JSON.parse(sc.decode(msg.data));
+            console.log(`Received ${msg.subject}:`, payload);
+            
+            if (msg.subject === 'student.created') {
+               console.log(`Creating Moodle user for ${payload.erpId}`);
+               await moodle.call('core_user_create_users', {
+                 'users[0][username]': (payload.erpId || payload.name).toLowerCase(),
+                 'users[0][password]': 'Changeme@123',
+                 'users[0][firstname]': payload.first_name || 'Student',
+                 'users[0][lastname]': payload.last_name || payload.erpId || payload.name,
+                 'users[0][email]': payload.student_email_id || `${payload.erpId || payload.name}@example.com`,
+               });
+            }
+            
+            msg.ack();
+          } catch (err) {
+            console.error('Error processing student event', err);
+            msg.nak(); // Retry later
+          }
         }
-        
-        msg.ack();
+        clearInterval(pullInterval);
       } catch (err) {
-        console.error('Error processing student event', err);
-        msg.nak(); // Retry later
+        console.error('Student subscription error, retrying in 5s...', err);
+        await new Promise(resolve => setTimeout(resolve, 5000));
       }
     }
-  })();
-  
-  // Pull continuously
-  setInterval(() => {
-    studentSub.pull({ batch: 10, expires: 5000 });
-  }, 1000);
+  };
+  startStudentSub();
 
-  // Subscribe to batches
-  const batchSub = await js.pullSubscribe('batch.>', {
-    config: { durable_name: 'moodle-worker-batch' }
-  });
-
-  (async () => {
-    for await (const msg of batchSub) {
+  const startBatchSub = async () => {
+    while (true) {
       try {
-        const payload = JSON.parse(sc.decode(msg.data));
-        console.log(`Received ${msg.subject}:`, payload);
-        
-        if (msg.subject === 'batch.created') {
-           console.log(`Creating Moodle course for ${payload.batchName}`);
-           await moodle.call('core_course_create_courses', {
-             'courses[0][fullname]': payload.batchName || payload.name,
-             'courses[0][shortname]': payload.batchName || payload.name,
-             'courses[0][categoryid]': 1,
-           });
+        const batchSub = await js.pullSubscribe('batch.>', {
+          config: { durable_name: 'moodle-worker-batch' }
+        });
+
+        const pullInterval = setInterval(() => {
+          batchSub.pull({ batch: 10, expires: 5000 });
+        }, 1000);
+
+        for await (const msg of batchSub) {
+          try {
+            const payload = JSON.parse(sc.decode(msg.data));
+            console.log(`Received ${msg.subject}:`, payload);
+            
+            if (msg.subject === 'batch.created') {
+               console.log(`Creating Moodle course for ${payload.batchName}`);
+               await moodle.call('core_course_create_courses', {
+                 'courses[0][fullname]': payload.batchName || payload.name,
+                 'courses[0][shortname]': payload.batchName || payload.name,
+                 'courses[0][categoryid]': 1,
+               });
+            }
+            
+            msg.ack();
+          } catch (err) {
+            console.error('Error processing batch event', err);
+            msg.nak();
+          }
         }
-        
-        msg.ack();
+        clearInterval(pullInterval);
       } catch (err) {
-        console.error('Error processing batch event', err);
-        msg.nak();
+        console.error('Batch subscription error, retrying in 5s...', err);
+        await new Promise(resolve => setTimeout(resolve, 5000));
       }
     }
-  })();
-  
-  setInterval(() => {
-    batchSub.pull({ batch: 10, expires: 5000 });
-  }, 1000);
+  };
+  startBatchSub();
 
   // Graceful shutdown
   process.on('SIGINT', async () => {

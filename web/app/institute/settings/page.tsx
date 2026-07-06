@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Save, Building2, Palette, Globe, CreditCard } from "lucide-react"
+import { Save, Building2, Palette, Globe, CreditCard, Bell } from "lucide-react"
 import { useTenant, useUpdateTenant, useSaveRazorpayConfig } from "@/lib/api/hooks"
 import { useAuthStore } from "@/lib/stores/auth-store"
 import { FeatureGate } from "@/components/shared/feature-gate"
@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { LoadingState } from "@/components/shared/loading-state"
 import { toast } from "sonner"
+import { NotificationPreferences } from "@/components/notifications/notification-preferences"
 
 function hexToHSL(hex: string) {
   let r = 0, g = 0, b = 0
@@ -85,6 +86,7 @@ export default function SettingsPage() {
           <TabsTrigger value="branding"><Palette className="w-4 h-4 mr-2" /> Branding</TabsTrigger>
           <TabsTrigger value="domains"><Globe className="w-4 h-4 mr-2" /> Domains</TabsTrigger>
           <TabsTrigger value="payments"><CreditCard className="w-4 h-4 mr-2" /> Payments</TabsTrigger>
+          <TabsTrigger value="notifications"><Bell className="w-4 h-4 mr-2" /> Notifications</TabsTrigger>
         </TabsList>
 
         <TabsContent value="general">
@@ -190,6 +192,12 @@ export default function SettingsPage() {
               </CardContent>
             </Card>
           </FeatureGate>
+        </TabsContent>
+
+        <TabsContent value="notifications">
+          <div className="max-w-2xl">
+            <NotificationPreferences />
+          </div>
         </TabsContent>
       </Tabs>
     </div>

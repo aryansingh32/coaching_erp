@@ -48,7 +48,7 @@ export class LmsController {
   addContent(
     @Request() req: { user: AuthenticatedUser },
     @Param('courseId') courseId: number,
-    @Body() body: { name: string; externalurl?: string; filename?: string; filecontentBase64?: string },
+    @Body() body: { name: string; type?: string; externalurl?: string; filename?: string; filecontentBase64?: string; intro?: string },
   ) {
     return this.lmsService.addCourseContent(courseId, req.user, body);
   }
@@ -62,5 +62,49 @@ export class LmsController {
     @Query('userId') userId: number,
   ) {
     return this.lmsService.getUserGrades(userId, courseId, req.user);
+  }
+
+  @Post('courses/:courseId/grades')
+  @Roles('admin', 'instructor')
+  @ApiOperation({ summary: 'Save user grades for course' })
+  saveGrades(
+    @Request() req: { user: AuthenticatedUser },
+    @Param('courseId') courseId: number,
+    @Body() body: { grades: { userid: number; grade: number; itemid: number }[] },
+  ) {
+    return this.lmsService.saveGrades(courseId, body.grades, req.user);
+  }
+
+  @Post('assignments/:id/submit')
+  @Roles('student')
+  @ApiOperation({ summary: 'Submit an assignment' })
+  submitAssignment(
+    @Request() req: { user: AuthenticatedUser },
+    @Param('id') assignmentId: number,
+    @Body() body: { fileBase64: string; filename: string },
+  ) {
+    return this.lmsService.submitAssignment(assignmentId, body.fileBase64, body.filename, req.user);
+  }
+
+  @Post('forums/:id/discussions')
+  @Roles('admin', 'instructor', 'student')
+  @ApiOperation({ summary: 'Add forum discussion' })
+  addForumDiscussion(
+    @Request() req: { user: AuthenticatedUser },
+    @Param('id') forumId: number,
+    @Body() body: { subject: string; message: string },
+  ) {
+    return this.lmsService.addForumDiscussion(forumId, body.subject, body.message, req.user);
+  }
+
+  @Post('discussions/:id/replies')
+  @Roles('admin', 'instructor', 'student')
+  @ApiOperation({ summary: 'Reply to forum discussion' })
+  replyDiscussion(
+    @Request() req: { user: AuthenticatedUser },
+    @Param('id') discussionId: number,
+    @Body() body: { message: string },
+  ) {
+    return this.lmsService.replyToDiscussion(discussionId, body.message, req.user);
   }
 }

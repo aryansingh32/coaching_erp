@@ -146,6 +146,30 @@ export function useRecordPayment() {
   })
 }
 
+export function usePaymentHistory(studentId?: string) {
+  return useQuery({
+    queryKey: ['fees', 'history', studentId],
+    queryFn: () => api.getPaymentHistory(studentId),
+  })
+}
+
+export function useRecordManualPayment() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: api.recordManualPayment,
+    onSuccess: (_, { studentId }) => {
+      qc.invalidateQueries({ queryKey: queryKeys.fees.pending(studentId) })
+      qc.invalidateQueries({ queryKey: ['fees', 'history'] })
+    },
+  })
+}
+
+export function useSendBulkReminders() {
+  return useMutation({
+    mutationFn: api.sendBulkReminders,
+  })
+}
+
 // ─── Analytics ──────────────────────────────────────────────────────────────
 
 export function useKpis(tenantId?: string) {
@@ -458,6 +482,59 @@ export function useAddLmsCourseContent(courseId: number) {
   })
 }
 
+// ─── Advanced Moodle Activities ─────────────────────────────────────────────
+
+export function useSubmitMoodleAssignment() {
+  return useMutation({
+    mutationFn: ({ assignmentId, fileBase64, filename }: { assignmentId: number; fileBase64: string; filename: string }) =>
+      api.submitMoodleAssignment(assignmentId, fileBase64, filename),
+  })
+}
+
+export function useAddMoodleForumDiscussion() {
+  return useMutation({
+    mutationFn: ({ forumId, subject, message }: { forumId: number; subject: string; message: string }) =>
+      api.addMoodleForumDiscussion(forumId, subject, message),
+  })
+}
+
+export function useReplyMoodleDiscussion() {
+  return useMutation({
+    mutationFn: ({ discussionId, message }: { discussionId: number; message: string }) =>
+      api.replyMoodleDiscussion(discussionId, message),
+  })
+}
+
+export function useMoodleGradeItems(courseId: number) {
+  return useQuery({
+    queryKey: ['moodle-grade-items', courseId],
+    queryFn: () => api.getMoodleGradeItems(courseId),
+    enabled: !!courseId,
+  })
+}
+
+export function useSaveMoodleGrades() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ courseId, grades }: { courseId: number; grades: { userid: number; grade: number; itemid: number }[] }) =>
+      api.saveMoodleGrades(courseId, grades),
+    onSuccess: (_, { courseId }) => {
+      qc.invalidateQueries({ queryKey: ['moodle-grade-items', courseId] })
+    },
+  })
+}
+
+export function useCreateMoodleActivity() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ courseId, data }: { courseId: number; data: { type: string; name: string; intro?: string; [key: string]: any } }) =>
+      api.createMoodleActivity(courseId, data),
+    onSuccess: (_, { courseId }) => {
+      qc.invalidateQueries({ queryKey: queryKeys.lms.content(courseId) })
+    },
+  })
+}
+
 export function useCreateQuiz() {
   const qc = useQueryClient()
   return useMutation({
@@ -505,6 +582,70 @@ export function useSuspendTenant() {
     onSuccess: (_, id) => {
       qc.invalidateQueries({ queryKey: queryKeys.tenants.all })
       qc.invalidateQueries({ queryKey: queryKeys.superadmin.tenantMetrics(id) })
+    },
+  })
+}
+
+// ─── Frappe Proxies (Diary & Help) ──────────────────────────────────────────
+
+export function useSchoolDiary(batchName?: string) {
+  return useQuery({
+    queryKey: ['frappe', 'school_diary', batchName],
+    queryFn: () => {
+      const filters = batchName ? JSON.stringify([['student_group', '=', batchName]]) : undefined
+      const fields = JSON.stringify(['name', 'date', 'title', 'content', 'published', 'instructor_name', 'student_group'])
+      return api.proxyErpList('Student Diary', filters, fields) as Promise<import('./types').SchoolDiaryEntry[]>
+    }
+  })
+}
+
+export function useHelpCategories() {
+  return useQuery({
+    queryKey: ['frappe', 'help_category'],
+    queryFn: () => {
+      const fields = JSON.stringify(['name', 'category_name', 'description', 'icon'])
+      return api.proxyErpList('Help Category', undefined, fields) as Promise<import('./types').HelpCategory[]>
+    }
+  })
+}
+
+export function useHelpArticles(category?: string, searchQuery?: string) {
+  return useQuery({
+    queryKey: ['frappe', 'help_article', category, searchQuery],
+    queryFn: () => {
+      const filters: any[] = [['published', '=', 1]]
+      if (category) filters.push(['category', '=', category])
+      if (searchQuery) filters.push(['title', 'like', `%${searchQuery}%`])
+      
+      const fields = JSON.stringify(['name', 'title', 'category', 'content', 'published', 'author'])
+      return api.proxyErpList('Help Article', JSON.stringify(filters), fields) as Promise<import('./types').HelpArticle[]>
+    }
+  })
+}
+
+// ─── Notifications ──────────────────────────────────────────────────────────
+
+export function useNotificationLogs(filters?: Parameters<typeof api.getNotificationLogs>[0]) {
+  return useQuery({
+    queryKey: ['notifications', 'logs', JSON.stringify(filters)],
+    queryFn: () => api.getNotificationLogs(filters),
+    refetchInterval: 15_000,
+  })
+}
+
+export function useNotificationPreferences() {
+  return useQuery({
+    queryKey: ['notifications', 'preferences'],
+    queryFn: api.getNotificationPreferences,
+  })
+}
+
+export function useUpdateNotificationPreferences() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: api.updateNotificationPreferences,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['notifications', 'preferences'] })
     },
   })
 }

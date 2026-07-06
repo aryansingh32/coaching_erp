@@ -25,32 +25,45 @@ function RecordingCard({ meetingId, meetingName }: { meetingId: string; meetingN
   const raw = data?.recordings?.recording
   const recordings: Recording[] = raw ? (Array.isArray(raw) ? raw : [raw]) : []
 
+  // Filter out unpublished recordings for students
+  const publishedRecordings = recordings.filter(r => r.published)
+
   if (isLoading) return <LoadingState message="Loading recordings..." />
-  if (!recordings.length) return null
+  if (!publishedRecordings.length) return null
 
   return (
     <>
-      {recordings.map((rec) => {
+      {publishedRecordings.map((rec) => {
         const url = getPlaybackUrl(rec)
         return (
-          <Card key={rec.recordID}>
+          <Card key={rec.recordID} className="border-inst-border shadow-sm hover:border-inst-primary/50 transition-colors">
             <CardHeader className="pb-2">
               <CardTitle className="text-base flex items-center gap-2">
-                <Video className="w-4 h-4 text-primary" />
+                <Video className="w-5 h-5 text-inst-primary" />
                 {rec.name || meetingName}
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex items-center justify-between">
-              <p className="text-sm text-muted-foreground font-mono">{meetingId}</p>
-              {url ? (
-                <Button size="sm" asChild>
-                  <a href={url} target="_blank" rel="noopener noreferrer">
-                    <Play className="w-4 h-4 mr-1" /> Watch
-                  </a>
-                </Button>
-              ) : (
-                <span className="text-xs text-muted-foreground">Processing…</span>
-              )}
+            <CardContent className="flex flex-col gap-4">
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-muted-foreground font-mono bg-muted px-1.5 py-0.5 rounded">ID: {meetingId}</p>
+                <span className="text-[10px] uppercase font-bold tracking-wider text-inst-primary bg-inst-primary/10 px-2 py-1 rounded-full">
+                  Published
+                </span>
+              </div>
+              
+              <div className="flex justify-end pt-2 border-t">
+                {url ? (
+                  <Button size="sm" asChild className="w-full sm:w-auto">
+                    <a href={url} target="_blank" rel="noopener noreferrer">
+                      <Play className="w-4 h-4 mr-2" /> Watch Recording
+                    </a>
+                  </Button>
+                ) : (
+                  <Button size="sm" variant="outline" disabled className="w-full sm:w-auto">
+                    Processing…
+                  </Button>
+                )}
+              </div>
             </CardContent>
           </Card>
         )

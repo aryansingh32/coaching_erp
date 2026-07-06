@@ -1,0 +1,58 @@
+# =============================================================================
+# Mobile GitIgnore
+# =============================================================================
+
+# Dependencies
+node_modules/
+
+# Expo
+.expo/
+.expo-shared/
+dist/
+web-build/
+
+# Environment variables & secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+!.env.example
+
+# Expo secrets
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Xcode
+ios/Pods/
+ios/build/
+*.xcworkspace
+!default.xcworkspace
+
+# Android
+android/app/build/
+android/.gradle/
+android/local.properties
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# TypeScript
+*.tsbuildinfo

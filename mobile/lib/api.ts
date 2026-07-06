@@ -85,3 +85,15 @@ export async function getAnalyticsEmbedUrl(erpId: string) {
 export async function updatePushToken(erpId: string, pushToken: string) {
   return apiClient.post(`/students/${erpId}/push-token`, { pushToken })
 }
+
+export async function getRazorpayConfig() {
+  return apiClient.get('/fees/razorpay/config')
+}
+
+export async function verifyRazorpayPayment(data: {
+  razorpay_payment_id: string
+  razorpay_order_id: string
+  razorpay_signature: string
+}) {
+  return apiClient.post('/fees/razorpay/verify', data)
+}

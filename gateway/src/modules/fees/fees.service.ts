@@ -16,6 +16,7 @@ import {
   SaveRazorpayConfigDto,
   VerifyRazorpayPaymentDto,
 } from './dto/fees.dto';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class FeesService {
@@ -28,6 +29,7 @@ export class FeesService {
     private readonly configService: ConfigService,
     @InjectRepository(Institute) private readonly instituteRepo: Repository<Institute>,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   private async getTenantRazorpayCreds(tenantId: string) {
@@ -70,6 +72,30 @@ export class FeesService {
     } catch {
       return [{ fee_id: 'FEE-001', amount: 1000, due_date: '2026-07-01', description: 'Tuition fee' }];
     }
+  }
+
+  async getHistory(studentId?: string) {
+    // Implement getting history from ERPNext Payment Entries
+    try {
+      const filters: any[] = [['docstatus', '=', 1]];
+      if (studentId) {
+        filters.push(['party', '=', studentId]);
+      }
+      const entries = await this.erpAdapter.listDocs('Payment Entry', filters);
+      return entries;
+    } catch {
+      return [];
+    }
+  }
+
+  async sendBulkReminders(studentIds: string[]) {
+    // For each student, trigger a fee-reminder notification
+    for (const studentId of studentIds) {
+      await this.notificationsService.triggerEvent('fee-reminder', studentId, {
+        message: 'You have pending fee installments. Please clear them at the earliest.',
+      });
+    }
+    return { success: true, count: studentIds.length };
   }
 
   async getRazorpayPublicConfig(tenantId: string) {
@@ -129,11 +155,19 @@ export class FeesService {
       dto.razorpay_signature,
     );
     if (!valid) throw new BadRequestException('Invalid payment signature');
+    const cacheKey = `payment:processed:${dto.razorpay_payment_id}`;
+    const processed = await this.cacheManager.get(cacheKey);
+    if (processed) {
+      return { status: 'already_verified' };
+    }
+
     await this.recordPayment({
       studentId: dto.studentId,
       amount: dto.amount,
       referenceNumber: dto.razorpay_payment_id,
     });
+    
+    await this.cacheManager.set(cacheKey, true, 86400 * 30);
     return { status: 'verified' };
   }
 
@@ -161,6 +195,10 @@ export class FeesService {
         studentId,
         amount: entity.amount / 100,
         referenceNumber: entity.id,
+      });
+      await this.notificationsService.triggerEvent('fee-received', studentId, {
+        amount: entity.amount / 100,
+        reference: entity.id,
       });
       await this.cacheManager.set(cacheKey, true, 86400 * 30);
     }

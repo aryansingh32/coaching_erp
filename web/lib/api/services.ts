@@ -22,6 +22,14 @@ export async function verifyOtp(phone: string, otp: string, role: string) {
   return apiPost<VerifyOtpResult>('/auth/verify-otp', { phone, otp, role })
 }
 
+export async function googleLogin(token: string) {
+  return apiPost<VerifyOtpResult>('/auth/google', { token })
+}
+
+export async function googleRegister(token: string, role: string, phone: string) {
+  return apiPost<{ message: string }>('/auth/google/register', { token, role, phone })
+}
+
 export async function refreshToken(token: string) {
   return apiPost<{ accessToken: string }>('/auth/refresh', { refreshToken: token })
 }
@@ -300,6 +308,24 @@ export async function getMeetingRecordings(meetingId: string) {
 
 // ─── Fees / Razorpay ────────────────────────────────────────────────────────
 
+export async function getPaymentHistory(studentId?: string) {
+  return apiGet<import('./types').PaymentTransaction[]>('/fees/history', { params: { studentId } })
+}
+
+export async function recordManualPayment(data: {
+  studentId: string
+  amount: number
+  payment_mode: 'Cash' | 'UPI' | 'Cheque'
+  reference_no?: string
+  date: string
+}) {
+  return apiPost('/fees/payment', data)
+}
+
+export async function sendBulkReminders(studentIds: string[]) {
+  return apiPost('/fees/reminder/bulk', { studentIds })
+}
+
 export async function getRazorpayConfig() {
   return apiGet<{ keyId: string; currency: string }>('/fees/razorpay/config')
 }
@@ -401,6 +427,32 @@ export async function getLmsCourseGrades(courseId: number, userId: number) {
   return apiGet<unknown>(`/lms/courses/${courseId}/grades`, { params: { userId } })
 }
 
+// ─── Advanced Moodle Activities ─────────────────────────────────────────────
+
+export async function submitMoodleAssignment(assignmentId: number, fileBase64: string, filename: string) {
+  return apiPost(`/lms/assignments/${assignmentId}/submit`, { fileBase64, filename })
+}
+
+export async function addMoodleForumDiscussion(forumId: number, subject: string, message: string) {
+  return apiPost(`/lms/forums/${forumId}/discussions`, { subject, message })
+}
+
+export async function replyMoodleDiscussion(discussionId: number, message: string) {
+  return apiPost(`/lms/discussions/${discussionId}/replies`, { message })
+}
+
+export async function getMoodleGradeItems(courseId: number) {
+  return apiGet<import('./types').GradeItem[]>(`/lms/courses/${courseId}/grade-items`)
+}
+
+export async function saveMoodleGrades(courseId: number, grades: { userid: number; grade: number; itemid: number }[]) {
+  return apiPost(`/lms/courses/${courseId}/grades`, { grades })
+}
+
+export async function createMoodleActivity(courseId: number, data: { type: string; name: string; intro?: string; [key: string]: any }) {
+  return apiPost<{ id: number; url: string }>(`/lms/courses/${courseId}/activities`, data)
+}
+
 // ─── Super Admin ────────────────────────────────────────────────────────────
 
 export async function getPlatformStats() {
@@ -453,4 +505,18 @@ export async function proxyMoodleCall(wsFunction: string, params?: Record<string
 
 export async function getAuthFeatures() {
   return apiGet<Record<string, boolean>>('/auth/features')
+}
+
+// ─── Notifications ──────────────────────────────────────────────────────────
+
+export async function getNotificationLogs(params?: { tenant?: string; event?: string }) {
+  return apiGet<import('./types').NotificationLog[]>('/notifications/logs', { params })
+}
+
+export async function getNotificationPreferences() {
+  return apiGet<import('./types').NotificationPreferences>('/notifications/preferences')
+}
+
+export async function updateNotificationPreferences(data: Partial<import('./types').NotificationPreferences>) {
+  return apiPut<import('./types').NotificationPreferences>('/notifications/preferences', data)
 }

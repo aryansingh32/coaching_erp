@@ -8,6 +8,7 @@ import { ProgressRing } from "@/components/shared/progress-ring"
 import { LoadingState } from "@/components/shared/loading-state"
 import { ErrorState } from "@/components/shared/error-state"
 import { LiveFeedLog } from "@/components/attendance/live-feed-log"
+import { KPICard } from "@/components/ui/kpi-card"
 
 const DASHBOARD_ID = parseInt(process.env.NEXT_PUBLIC_METABASE_DASHBOARD_ID || '1', 10)
 
@@ -29,58 +30,33 @@ export default function InstituteDashboard() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-institute-border shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Students</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{kpis?.totalStudents ?? 0}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-institute-border shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Batches</CardTitle>
-            <GraduationCap className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{kpis?.activeBatches ?? 0}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-institute-border shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Monthly Collection</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-institute-success">
-              ₹{(kpis?.revenueMonthly ?? 0).toLocaleString('en-IN')}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-institute-border shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Today&apos;s Attendance</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent className="flex items-center justify-between">
-            <div>
-              <div className="text-2xl font-bold">
-                {attendanceToday > 0 ? `${attendanceToday}%` : '—'}
-              </div>
-            </div>
-            {attendanceToday > 0 && (
-              <ProgressRing
-                value={attendanceToday}
-                size="sm"
-                color={attendanceToday > 80 ? 'success' : 'warning'}
-              />
-            )}
-          </CardContent>
-        </Card>
+        <KPICard
+          label="Total Students"
+          value={kpis?.totalStudents ?? 0}
+          icon={<Users className="h-4 w-4" />}
+          loading={isLoading}
+        />
+        <KPICard
+          label="Active Batches"
+          value={kpis?.activeBatches ?? 0}
+          icon={<GraduationCap className="h-4 w-4" />}
+          loading={isLoading}
+        />
+        <KPICard
+          label="Monthly Collection"
+          value={`₹${(kpis?.revenueMonthly ?? 0).toLocaleString('en-IN')}`}
+          icon={<DollarSign className="h-4 w-4" />}
+          variant="success"
+          loading={isLoading}
+        />
+        <KPICard
+          label="Today's Attendance"
+          value={attendanceToday > 0 ? `${attendanceToday}%` : '—'}
+          icon={<Activity className="h-4 w-4" />}
+          trend={attendanceToday > 0 ? (attendanceToday > 80 ? 1 : -1) : 0}
+          subLabel={attendanceToday > 80 ? "On track" : "Needs attention"}
+          loading={isLoading}
+        />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">

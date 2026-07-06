@@ -11,7 +11,7 @@ export default function TeacherHome() {
     queryFn: listBatches,
   })
 
-  const batches = (batchesRes as { data?: unknown[] })?.data ?? []
+  const batches = (batchesRes as { data?: { name?: string; student_group_name?: string; program?: string }[] })?.data ?? []
 
   return (
     <ScrollView style={styles.container}>
@@ -20,7 +20,7 @@ export default function TeacherHome() {
 
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Today&apos;s Batches ({batches.length})</Text>
-        {batches.map((b: { name?: string; student_group_name?: string; program?: string }, i: number) => (
+        {batches.map((b, i) => (
           <View key={i} style={styles.batchRow}>
             <Text style={styles.batchName}>{b.student_group_name ?? b.name ?? 'Batch'}</Text>
             <Text style={styles.program}>{b.program ?? ''}</Text>

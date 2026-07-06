@@ -6,6 +6,7 @@ import { LayoutDashboard, Users, ClipboardCheck, LogOut, Video, Film, BookOpen, 
 import { AuthGuard } from "@/components/auth/auth-guard"
 import { useAuthStore } from "@/lib/stores/auth-store"
 import { useFeatureEnabled } from "@/lib/features"
+import { NovuNotificationBell } from "@/components/notifications/novu-bell"
 
 type TeachNavItem = {
   href: string
@@ -37,6 +38,7 @@ export default function TeachLayout({ children }: { children: React.ReactNode })
   const gradesEnabled = useFeatureEnabled('grades')
   const commEnabled = useFeatureEnabled('communication')
   const rfidEnabled = useFeatureEnabled('attendance_rfid')
+  const notificationsEnabled = useFeatureEnabled('notifications')
 
   const visibleNav = navItems.filter((item) => {
     if (item.feature === 'live_classes') return liveClassesEnabled
@@ -56,13 +58,13 @@ export default function TeachLayout({ children }: { children: React.ReactNode })
 
   return (
     <AuthGuard allowedRoles={['instructor']}>
-      <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col md:flex-row">
-        <nav className="md:hidden fixed bottom-0 w-full bg-white border-t border-slate-200 flex justify-around items-center h-16 z-50">
+      <div className="min-h-screen bg-[var(--inst-bg-base)] text-[var(--inst-text-primary)] flex flex-col md:flex-row">
+        <nav className="md:hidden fixed bottom-0 w-full bg-[var(--inst-bg-surface)] border-t border-[var(--inst-border)] flex justify-around items-center h-16 z-50">
           {visibleNav.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="flex flex-col items-center text-slate-500 hover:text-blue-600 transition-colors"
+              className="flex flex-col items-center text-[var(--inst-muted)] hover:text-[hsl(var(--inst-primary))] transition-colors"
             >
               <item.icon className="w-5 h-5 mb-1" />
               <span className="text-[10px]">{item.label.split(' ')[0]}</span>
@@ -70,15 +72,18 @@ export default function TeachLayout({ children }: { children: React.ReactNode })
           ))}
         </nav>
 
-        <aside className="hidden md:flex flex-col w-64 bg-white border-r border-slate-200 min-h-screen p-6 shadow-sm">
-          <div className="flex items-center space-x-3 mb-10">
-            <div className="w-8 h-8 rounded-md bg-blue-600 flex items-center justify-center font-bold text-white">
-              {displayName?.[0] ?? 'T'}
+        <aside className="hidden md:flex flex-col w-64 bg-[var(--inst-bg-surface)] border-r border-[var(--inst-border)] min-h-screen p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-10">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 rounded-md bg-[hsl(var(--inst-primary))] flex items-center justify-center font-bold text-white">
+                {displayName?.[0] ?? 'T'}
+              </div>
+              <div>
+                <span className="text-xl font-bold tracking-tight text-[var(--inst-text-primary)] block">Educator</span>
+                <span className="text-xs text-[var(--inst-muted)]">{displayName}</span>
+              </div>
             </div>
-            <div>
-              <span className="text-xl font-bold tracking-tight text-slate-800 block">Educator</span>
-              <span className="text-xs text-slate-500">{displayName}</span>
-            </div>
+            {notificationsEnabled && <NovuNotificationBell />}
           </div>
 
           <nav className="flex-1 space-y-2">
@@ -86,7 +91,7 @@ export default function TeachLayout({ children }: { children: React.ReactNode })
               <Link
                 key={item.href}
                 href={item.href}
-                className="flex items-center space-x-3 px-3 py-2 rounded-md text-slate-600 hover:bg-slate-100 transition-colors"
+                className="flex items-center space-x-3 px-3 py-2 rounded-md text-[var(--inst-text-primary)] hover:bg-[var(--inst-bg-muted)] transition-colors"
               >
                 <item.icon className="w-4 h-4" />
                 <span>{item.label}</span>
@@ -96,7 +101,7 @@ export default function TeachLayout({ children }: { children: React.ReactNode })
 
           <button
             onClick={handleLogout}
-            className="flex items-center space-x-3 px-3 py-2 rounded-md text-red-600 hover:bg-red-50 transition-colors mt-auto"
+            className="flex items-center space-x-3 px-3 py-2 rounded-md text-[var(--inst-danger)] hover:bg-[var(--inst-absent-bg)] transition-colors mt-auto"
           >
             <LogOut className="w-4 h-4" />
             <span>Sign Out</span>

@@ -1,5 +1,5 @@
 import { Injectable, Logger, NotFoundException, ForbiddenException } from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
+import { DomainEventBus } from '../../shared/events/domain-event-bus';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { EducationAdapter } from '../../adapters/erpnext/education.adapter';
@@ -7,6 +7,7 @@ import { RfidCard } from '../../shared/entities/rfid-card.entity';
 import { TenantScopeService } from '../../shared/tenant/tenant-scope.service';
 import { FeaturesService } from '../../shared/feature-flags/features.service';
 import { RfidPunchDto, ManualAttendanceDto } from './dto/attendance.dto';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class AttendanceService {
@@ -14,11 +15,12 @@ export class AttendanceService {
 
   constructor(
     private readonly erpAdapter: EducationAdapter,
-    private readonly eventEmitter: EventEmitter2,
+    private readonly eventBus: DomainEventBus,
     private readonly tenantScope: TenantScopeService,
     private readonly featuresService: FeaturesService,
     @InjectRepository(RfidCard)
     private readonly rfidCardRepo: Repository<RfidCard>,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async processRfidPunch(dto: RfidPunchDto) {
@@ -47,12 +49,17 @@ export class AttendanceService {
       studentGroup,
     );
 
-    this.eventEmitter.emit('attendance.marked', {
+    await this.eventBus.publish('attendance.marked', {
       studentId: card.erp_student_id,
       instituteId: card.institute_id,
       deviceId: dto.deviceId,
       time: new Date(),
       status: 'Present',
+    }, card.institute_id);
+
+    await this.notificationsService.triggerEvent('attendance-punch', card.erp_student_id, {
+      status: 'Present',
+      date: today,
     });
 
     return record;
@@ -69,10 +76,15 @@ export class AttendanceService {
       dto.batchId,
     );
 
-    this.eventEmitter.emit('attendance.marked', {
+    await this.eventBus.publish('attendance.marked', {
       studentId: dto.studentId,
       time: dto.date,
       status: dto.status,
+    }, tenantId);
+
+    await this.notificationsService.triggerEvent('attendance-punch', dto.studentId, {
+      status: dto.status,
+      date: dto.date,
     });
 
     return record;

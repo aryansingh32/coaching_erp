@@ -10,6 +10,7 @@ import { LoadingState } from "@/components/shared/loading-state"
 import { EmptyState } from "@/components/shared/empty-state"
 import { useState } from "react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { CalendarView, CalendarEvent } from "@/components/shared/calendar-view"
 
 export default function LearnAttendancePage() {
   const studentId = useActiveStudentId()
@@ -58,10 +59,18 @@ export default function LearnAttendancePage() {
       ) : !attendance ? (
         <EmptyState title="No attendance data" />
       ) : (
-        <Card>
-          <CardHeader><CardTitle>Attendance Calendar</CardTitle></CardHeader>
-          <CardContent>
-            <pre className="text-xs overflow-auto max-h-96">{JSON.stringify(attendance, null, 2)}</pre>
+        <Card className="shadow-sm border-inst-border">
+          <CardHeader className="pb-3 border-b bg-muted/10">
+            <CardTitle>Attendance Calendar</CardTitle>
+          </CardHeader>
+          <CardContent className="p-4 sm:p-6">
+            <CalendarView 
+              events={(attendance as any[])?.map(a => ({
+                date: a.attendance_date,
+                type: a.status === 'Present' ? 'present' : a.status === 'Absent' ? 'absent' : 'holiday',
+                title: a.status
+              })) || []} 
+            />
           </CardContent>
         </Card>
       )}

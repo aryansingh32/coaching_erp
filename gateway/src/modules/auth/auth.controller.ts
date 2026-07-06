@@ -39,6 +39,20 @@ export class AuthController {
     return this.authService.logout(dto.refreshToken);
   }
 
+  @Post('google')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Google Login' })
+  async googleLogin(@Body() dto: { token: string }) {
+    return this.authService.verifyGoogleLogin(dto.token);
+  }
+
+  @Post('google/register')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Google Register (Multi-step)' })
+  async googleRegister(@Body() dto: { token: string; role: string; phone: string }) {
+    return this.authService.registerGoogleUser(dto.token, dto.role, dto.phone);
+  }
+
   @Get('features')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()

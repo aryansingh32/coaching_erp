@@ -5,18 +5,16 @@ import { useStudent, usePendingFees, useApplyLeave, useBatches } from "@/lib/api
 import { ParentChildSelector, useActiveStudentId } from "@/components/learn/parent-child-selector"
 import { FeatureGate } from "@/components/shared/feature-gate"
 import { RazorpayCheckout } from "@/components/payments/razorpay-checkout"
+import { NotificationPreferences } from "@/components/notifications/notification-preferences"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { LoadingState } from "@/components/shared/loading-state"
 import { ErrorState } from "@/components/shared/error-state"
 import { EmptyState } from "@/components/shared/empty-state"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { useQueryClient } from "@tanstack/react-query"
 import { queryKeys } from "@/lib/api/query-keys"
-import { useState } from "react"
-import { toast } from "sonner"
+import { LeaveRequestForm } from "@/components/learn/leave-request-form"
+import { UpdateStudentInfo } from "@/components/learn/update-student-info"
 
 export default function ProfilePage() {
   const role = useAuthStore((s) => s.role)
@@ -25,13 +23,6 @@ export default function ProfilePage() {
   const { data: student, isLoading, isError, refetch } = useStudent(studentId)
   const { data: pendingFees, refetch: refetchFees } = usePendingFees(studentId)
   const { data: batches } = useBatches()
-  const applyLeave = useApplyLeave()
-  const [leaveForm, setLeaveForm] = useState({
-    from_date: '',
-    to_date: '',
-    reason: '',
-    student_group: '',
-  })
 
   const onPaymentSuccess = () => {
     refetchFees()
@@ -42,17 +33,6 @@ export default function ProfilePage() {
   if (isError) return <ErrorState onRetry={() => refetch()} />
 
   const title = role === 'parent' ? 'Child Profile & Fees' : 'Profile & Fees'
-
-  const handleLeave = async (e: React.FormEvent) => {
-    e.preventDefault()
-    try {
-      await applyLeave.mutateAsync({ studentId, data: leaveForm })
-      toast.success('Leave request submitted')
-      setLeaveForm({ from_date: '', to_date: '', reason: '', student_group: '' })
-    } catch (err: unknown) {
-      toast.error((err as { message?: string })?.message || 'Could not submit leave')
-    }
-  }
 
   const batchOptions = batches ?? []
 
@@ -65,15 +45,22 @@ export default function ProfilePage() {
       </div>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle>{role === 'parent' ? 'Child Profile' : 'Profile'}</CardTitle>
+          <UpdateStudentInfo student={student} />
         </CardHeader>
-        <CardContent className="space-y-2 text-sm">
-          <p>
+        <CardContent className="space-y-2 text-sm pt-4">
+          <p className="font-semibold text-lg">
             {student?.first_name} {student?.last_name ?? ''}
           </p>
-          <p className="text-muted-foreground">{student?.student_email_id ?? '—'}</p>
-          <p className="text-muted-foreground">{student?.student_mobile_number ?? '—'}</p>
+          <p className="text-muted-foreground flex items-center gap-2">
+            <span className="w-4 h-4 inline-block bg-muted rounded-full flex items-center justify-center text-[10px]">✉️</span>
+            {student?.student_email_id ?? '—'}
+          </p>
+          <p className="text-muted-foreground flex items-center gap-2">
+            <span className="w-4 h-4 inline-block bg-muted rounded-full flex items-center justify-center text-[10px]">📱</span>
+            {student?.student_mobile_number ?? '—'}
+          </p>
         </CardContent>
       </Card>
 
@@ -111,63 +98,11 @@ export default function ProfilePage() {
         </Card>
       </FeatureGate>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Request Leave</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleLeave} className="space-y-4 max-w-md">
-            <div>
-              <Label>Batch</Label>
-              <select
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                value={leaveForm.student_group}
-                onChange={(e) => setLeaveForm({ ...leaveForm, student_group: e.target.value })}
-                required
-              >
-                <option value="">Select batch</option>
-                {batchOptions.map((b) => {
-                  const id = b.name ?? b.student_group_name ?? ''
-                  return (
-                    <option key={id} value={id}>{b.student_group_name ?? b.name}</option>
-                  )
-                })}
-              </select>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>From</Label>
-                <Input
-                  type="date"
-                  value={leaveForm.from_date}
-                  onChange={(e) => setLeaveForm({ ...leaveForm, from_date: e.target.value })}
-                  required
-                />
-              </div>
-              <div>
-                <Label>To</Label>
-                <Input
-                  type="date"
-                  value={leaveForm.to_date}
-                  onChange={(e) => setLeaveForm({ ...leaveForm, to_date: e.target.value })}
-                  required
-                />
-              </div>
-            </div>
-            <div>
-              <Label>Reason</Label>
-              <Textarea
-                value={leaveForm.reason}
-                onChange={(e) => setLeaveForm({ ...leaveForm, reason: e.target.value })}
-                required
-              />
-            </div>
-            <Button type="submit" disabled={applyLeave.isPending}>
-              {applyLeave.isPending ? 'Submitting…' : 'Submit Leave Request'}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+      <div className="flex justify-start">
+        <LeaveRequestForm studentId={studentId} batches={batchOptions} />
+      </div>
+
+      <NotificationPreferences />
     </div>
   )
 }

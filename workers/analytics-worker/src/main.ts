@@ -55,56 +55,60 @@ async function bootstrap() {
       }
     }
 
-    try {
-      const sub = await js.pullSubscribe(stream.subject, {
-        config: { durable_name: `analytics-worker-${stream.name}` }
-      });
+    const startSubscription = async () => {
+      while (true) {
+        try {
+          const sub = await js.pullSubscribe(stream.subject, {
+            config: { durable_name: `analytics-worker-${stream.name}` }
+          });
 
-      (async () => {
-        for await (const msg of sub) {
-          try {
-            const payload = JSON.parse(sc.decode(msg.data));
-            console.log(`Analytics ingesting ${msg.subject}:`, payload);
-            
-            // Route to correct ClickHouse table based on subject
-            let tableName = 'analytics_events';
-            if (msg.subject.startsWith('attendance.')) tableName = 'attendance_events';
-            else if (msg.subject.startsWith('fee.')) tableName = 'fee_events';
-            else if (msg.subject.startsWith('test.')) tableName = 'test_events';
-            else if (msg.subject.startsWith('lms.')) tableName = 'lms_events';
-            else if (msg.subject.startsWith('class.')) tableName = 'class_events';
-            
-            // ClickHouse insert
-            await clickhouse.insert({
-              table: tableName,
-              values: [
-                {
-                  event_time: new Date().toISOString().replace('T', ' ').substring(0, 19),
-                  institute_id: payload.instituteId || 'unknown',
-                  batch_id: payload.batchId || '',
-                  student_id: payload.studentId || payload.erpId || '',
-                  event_type: msg.subject.split('.').pop() || 'unknown',
-                  properties: JSON.stringify(payload)
-                }
-              ],
-              format: 'JSONEachRow',
-            });
-            
-            msg.ack();
-          } catch (err) {
-            console.error('Error processing event for analytics', err);
-            msg.nak(); 
+          const pullInterval = setInterval(() => {
+            sub.pull({ batch: 100, expires: 5000 });
+          }, 1000);
+
+          for await (const msg of sub) {
+            try {
+              const payload = JSON.parse(sc.decode(msg.data));
+              console.log(`Analytics ingesting ${msg.subject}:`, payload);
+              
+              // Route to correct ClickHouse table based on subject
+              let tableName = 'analytics_events';
+              if (msg.subject.startsWith('attendance.')) tableName = 'attendance_events';
+              else if (msg.subject.startsWith('fee.')) tableName = 'fee_events';
+              else if (msg.subject.startsWith('test.')) tableName = 'test_events';
+              else if (msg.subject.startsWith('lms.')) tableName = 'lms_events';
+              else if (msg.subject.startsWith('class.')) tableName = 'class_events';
+              
+              // ClickHouse insert
+              await clickhouse.insert({
+                table: tableName,
+                values: [
+                  {
+                    event_time: new Date().toISOString().replace('T', ' ').substring(0, 19),
+                    institute_id: payload.instituteId || 'unknown',
+                    batch_id: payload.batchId || '',
+                    student_id: payload.studentId || payload.erpId || '',
+                    event_type: msg.subject.split('.').pop() || 'unknown',
+                    properties: JSON.stringify(payload)
+                  }
+                ],
+                format: 'JSONEachRow',
+              });
+              
+              msg.ack();
+            } catch (err) {
+              console.error('Error processing event for analytics', err);
+              msg.nak(); 
+            }
           }
+          clearInterval(pullInterval);
+        } catch (err) {
+          console.error(`Subscription error for ${stream.name}, retrying in 5s...`, err);
+          await new Promise(resolve => setTimeout(resolve, 5000));
         }
-      })();
-      
-      setInterval(() => {
-        sub.pull({ batch: 100, expires: 5000 });
-      }, 1000);
-      
-    } catch (err) {
-      console.error(`Error subscribing to ${stream.name}:`, (err as any).message);
-    }
+      }
+    };
+    startSubscription();
   }
 
   // Graceful shutdown

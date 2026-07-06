@@ -100,4 +100,26 @@ export class FeesController {
     const rawBody = typeof req.rawBody === 'string' ? req.rawBody : JSON.stringify(dto);
     return this.feesService.handleRazorpayWebhook(dto, signature, rawBody);
   }
+
+  @Get('history')
+  @UseGuards(JwtAuthGuard, RolesGuard, FeatureGuard)
+  @RequireFeature('fees_management')
+  @Roles('admin', 'student', 'parent')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get Payment History' })
+  async getHistory(@Req() req: any) {
+    // If user is a student, only allow their own history. Admin can see all or filter.
+    const studentId = req.user.role === 'student' ? req.user.erpId : req.query.studentId;
+    return this.feesService.getHistory(studentId);
+  }
+
+  @Post('reminder/bulk')
+  @UseGuards(JwtAuthGuard, RolesGuard, FeatureGuard)
+  @RequireFeature('fees_management')
+  @Roles('admin')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Send bulk fee reminders' })
+  async sendBulkReminders(@Body() dto: { studentIds: string[] }) {
+    return this.feesService.sendBulkReminders(dto.studentIds);
+  }
 }

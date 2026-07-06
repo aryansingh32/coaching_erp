@@ -44,41 +44,92 @@ async function bootstrap() {
 
   console.log('Listening for events...');
 
-  // Subscribe to attendance
-  const attendanceSub = await js.pullSubscribe('attendance.>', {
-    config: { durable_name: 'novu-worker-attendance' }
-  });
-
-  (async () => {
-    for await (const msg of attendanceSub) {
+  const startAttendanceSub = async () => {
+    while (true) {
       try {
-        const payload = JSON.parse(sc.decode(msg.data));
-        console.log(`Received ${msg.subject}:`, payload);
+        const attendanceSub = await js.pullSubscribe('attendance.>', {
+          config: { durable_name: 'novu-worker-attendance' }
+        });
         
-        if (msg.subject === 'attendance.rfid_punch') {
-           console.log(`Sending SMS to parents of ${payload.erpId}`);
-           await novu.trigger('attendance-punch', {
-             to: { subscriberId: payload.erpId },
-             payload: {
-               studentName: payload.studentName || 'Student',
-               time: new Date(payload.timestamp).toLocaleTimeString('en-IN'),
-               instituteName: payload.instituteName || 'Institute',
-               punchType: payload.punchType
-             }
-           });
+        const pullInterval = setInterval(() => {
+          attendanceSub.pull({ batch: 10, expires: 5000 });
+        }, 1000);
+
+        for await (const msg of attendanceSub) {
+          try {
+            const payload = JSON.parse(sc.decode(msg.data));
+            console.log(`Received ${msg.subject}:`, payload);
+            
+            if (msg.subject === 'attendance.rfid_punch') {
+               console.log(`Sending SMS to parents of ${payload.erpId}`);
+               await novu.trigger('attendance-punch', {
+                 to: { subscriberId: payload.erpId },
+                 payload: {
+                   studentName: payload.studentName || 'Student',
+                   time: new Date(payload.timestamp).toLocaleTimeString('en-IN'),
+                   instituteName: payload.instituteName || 'Institute',
+                   punchType: payload.punchType
+                 }
+               });
+            }
+            
+            msg.ack();
+          } catch (err) {
+            console.error('Error processing attendance event', err);
+            msg.nak(); 
+          }
         }
-        
-        msg.ack();
+        clearInterval(pullInterval);
       } catch (err) {
-        console.error('Error processing attendance event', err);
-        msg.nak(); 
+        console.error('Attendance subscription error, retrying in 5s...', err);
+        await new Promise(resolve => setTimeout(resolve, 5000));
       }
     }
-  })();
-  
-  setInterval(() => {
-    attendanceSub.pull({ batch: 10, expires: 5000 });
-  }, 1000);
+  };
+  startAttendanceSub();
+
+  const startFeeSub = async () => {
+    while (true) {
+      try {
+        const feeSub = await js.pullSubscribe('fee.>', {
+          config: { durable_name: 'novu-worker-fees' }
+        });
+        
+        const pullInterval = setInterval(() => {
+          feeSub.pull({ batch: 10, expires: 5000 });
+        }, 1000);
+
+        for await (const msg of feeSub) {
+          try {
+            const payload = JSON.parse(sc.decode(msg.data));
+            console.log(`Received ${msg.subject}:`, payload);
+            
+            if (msg.subject === 'fee.payment.confirmed') {
+               console.log(`Sending fee confirmation SMS to parents of ${payload.erpId}`);
+               await novu.trigger('fee-payment-confirmed', {
+                 to: { subscriberId: payload.erpId },
+                 payload: {
+                   studentName: payload.studentName || 'Student',
+                   amount: payload.amount,
+                   instituteName: payload.instituteName || 'Institute'
+                 }
+               });
+            }
+            
+            msg.ack();
+          } catch (err) {
+            console.error('Error processing fee event', err);
+            msg.nak(); 
+          }
+        }
+        clearInterval(pullInterval);
+      } catch (err) {
+        console.error('Fee subscription error, retrying in 5s...', err);
+        await new Promise(resolve => setTimeout(resolve, 5000));
+      }
+    }
+  };
+  startFeeSub();
 
   // Graceful shutdown
   process.on('SIGINT', async () => {

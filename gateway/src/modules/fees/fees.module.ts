@@ -7,12 +7,14 @@ import { ErpnextModule } from '../../adapters/erpnext/erpnext.module';
 import { RazorpayModule } from '../../adapters/razorpay/razorpay.module';
 import { Institute } from '../../shared/entities/institute.entity';
 import { AuthModule } from '../auth/auth.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
     ErpnextModule,
     RazorpayModule,
     AuthModule,
+    NotificationsModule,
     CacheModule.register(),
     TypeOrmModule.forFeature([Institute]),
   ],

@@ -40,7 +40,7 @@ export default function LiveClassScreen() {
           style={styles.webview}
           onLoadStart={() => setIsLoading(true)}
           onLoadEnd={() => setIsLoading(false)}
-          onError={(e) => {
+          onError={(e: any) => {
             Alert.alert('Connection Error', 'Failed to load the live class.');
             setIsLoading(false);
           }}

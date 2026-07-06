@@ -4,6 +4,7 @@ import { useMemo } from "react"
 import Link from "next/link"
 import { useAuthStore } from "@/lib/stores/auth-store"
 import { useStudent, useBatches, usePendingFees, useLiveClasses, useParentChildren } from "@/lib/api/hooks"
+import { useLiveClassSocket } from "@/lib/api/socket"
 import { ParentChildSelector, useActiveStudentId } from "@/components/learn/parent-child-selector"
 import { FeatureGate } from "@/components/shared/feature-gate"
 import { BookOpen, Clock, Award, Video, Users, IndianRupee } from "lucide-react"
@@ -14,6 +15,7 @@ import { ErrorState } from "@/components/shared/error-state"
 import { EmptyState } from "@/components/shared/empty-state"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { SchoolDiaryFeed } from "@/components/learn/school-diary-feed"
 import type { Batch, Student } from "@/lib/api/types"
 import { useQueries } from "@tanstack/react-query"
 import * as api from "@/lib/api/services"
@@ -82,6 +84,7 @@ export default function StudentDashboard() {
   const { data: batches } = useBatches()
   const { data: pendingFees } = usePendingFees(studentId)
   const { data: liveClasses } = useLiveClasses()
+  const { activeClasses } = useLiveClassSocket()
 
   if (isLoading) return <LoadingState message="Loading your dashboard..." />
   if (isError) return <ErrorState onRetry={() => refetch()} />
@@ -143,7 +146,13 @@ export default function StudentDashboard() {
           </Card>
         )}
 
-        <Card className="border-border bg-card/50">
+        {role !== 'parent' && (
+          <div className="md:row-span-2">
+            <SchoolDiaryFeed batchName={batches?.[0]?.name ?? batches?.[0]?.student_group_name} />
+          </div>
+        )}
+
+        <Card className="border-border bg-card/50 h-fit">
           <CardHeader>
             <CardTitle className="flex items-center">
               <Clock className="w-5 h-5 mr-2 text-primary" />
@@ -182,17 +191,28 @@ export default function StudentDashboard() {
                 <EmptyState title="No live classes right now" />
               ) : (
                 <ul className="space-y-3">
-                  {liveClasses.map((m) => (
-                    <li key={m.meetingId} className="flex items-center justify-between p-3 rounded-lg bg-accent/30">
-                      <span className="text-sm font-medium">{m.name}</span>
-                      <Link
-                        href={`/learn/live-class/${m.meetingId}`}
-                        className="text-sm text-primary hover:underline"
-                      >
-                        Join
-                      </Link>
-                    </li>
-                  ))}
+                  {liveClasses.map((m) => {
+                    const isActive = activeClasses.some(ac => ac.meetingId === m.meetingId)
+                    return (
+                      <li key={m.meetingId} className="flex items-center justify-between p-3 rounded-lg bg-accent/30">
+                        <div className="flex items-center gap-2">
+                          {isActive && (
+                            <span className="relative flex h-2.5 w-2.5">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+                            </span>
+                          )}
+                          <span className="text-sm font-medium">{m.name}</span>
+                        </div>
+                        <Link
+                          href={`/learn/live-class/${m.meetingId}`}
+                          className="text-sm text-primary hover:underline"
+                        >
+                          Join
+                        </Link>
+                      </li>
+                    )
+                  })}
                 </ul>
               )}
             </CardContent>

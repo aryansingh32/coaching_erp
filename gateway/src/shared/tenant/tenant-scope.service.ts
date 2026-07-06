@@ -23,9 +23,12 @@ export const COMPANY_SCOPED_DOCTYPES = new Set([
   'Assessment Plan',
   'Assessment Result',
   'Fee Structure',
+  'Fee Schedule',
   'Student Attendance',
   'Student Admission',
   'Guardian',
+  'Sales Invoice',
+  'Payment Entry',
 ]);
 
 @Injectable()

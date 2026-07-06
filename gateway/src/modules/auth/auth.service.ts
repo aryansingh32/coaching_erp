@@ -11,10 +11,12 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Institute } from '../../shared/entities/institute.entity';
 import { DEFAULT_TENANT_ID } from '../../shared/constants/tenant.constants';
+import { OAuth2Client } from 'google-auth-library';
 
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
+  private googleClient: OAuth2Client;
 
   constructor(
     private readonly jwtService: JwtService,
@@ -24,7 +26,9 @@ export class AuthService {
     private readonly httpService: HttpService,
     @InjectRepository(Institute) private readonly instituteRepo: Repository<Institute>,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
-  ) {}
+  ) {
+    this.googleClient = new OAuth2Client(this.configService.get<string>('GOOGLE_CLIENT_ID'));
+  }
 
   private isSuperAdminPhone(phone: string): boolean {
     const allowed = this.configService.get<string>('SUPER_ADMIN_PHONES') || '';
@@ -174,5 +178,135 @@ export class AuthService {
 
   async logout(token: string): Promise<any> {
     return { message: 'Logged out successfully' };
+  }
+
+  async verifyGoogleLogin(token: string): Promise<any> {
+    const ticket = await this.googleClient.verifyIdToken({
+      idToken: token,
+      audience: this.configService.get<string>('GOOGLE_CLIENT_ID'),
+    });
+    const payload = ticket.getPayload();
+    if (!payload || !payload.email) {
+      throw new UnauthorizedException('Invalid Google Token');
+    }
+    
+    let erpUser: any;
+    let role = '';
+    
+    try {
+      erpUser = await this.erpAdapter.getUserByEmail(payload.email);
+    } catch {
+      return { action: 'REGISTER_REQUIRED', email: payload.email, googleToken: token, name: payload.name };
+    }
+
+    if (erpUser.enabled === 0 || erpUser.custom_approval_status === 'Pending') {
+      throw new UnauthorizedException('Your account is under approval from admin');
+    }
+
+    let specificUser: any;
+    let linkedStudents: string[] = [];
+    
+    if (await this.erpAdapter.getStudentByEmail(payload.email)) {
+       role = 'student';
+       specificUser = await this.erpAdapter.getStudentByEmail(payload.email);
+    } else if (await this.erpAdapter.getInstructorByEmail(payload.email)) {
+       role = 'instructor';
+       specificUser = await this.erpAdapter.getInstructorByEmail(payload.email);
+    } else if (await this.erpAdapter.getGuardianByEmail(payload.email)) {
+       role = 'parent';
+       specificUser = await this.erpAdapter.getGuardianByEmail(payload.email);
+       const students = await this.erpAdapter.getStudentsByGuardian(specificUser.name);
+       linkedStudents = students.map((s: any) => s.name);
+    } else {
+       role = 'admin';
+       specificUser = erpUser;
+    }
+
+    const tenantId = this.configService.get<string>('DEFAULT_TENANT_ID') || DEFAULT_TENANT_ID;
+    const tenant = await this.instituteRepo.findOne({ where: { id: tenantId } });
+    const features = await this.featuresService.getTenantFeatures(tenantId);
+    const branding = {
+      primaryColor: tenant?.branding?.primaryColor || '#1e40af',
+      instituteName: tenant?.name || 'Coaching Institute',
+      logoUrl: tenant?.branding?.logoUrl,
+    };
+
+    const jwtPayload = {
+      sub: specificUser.name,
+      role,
+      tenantId,
+      linkedStudents: linkedStudents.length ? linkedStudents : undefined,
+    };
+    const accessToken = this.jwtService.sign(jwtPayload);
+    const refreshToken = this.jwtService.sign(jwtPayload, { expiresIn: '7d' });
+
+    return {
+      accessToken,
+      refreshToken,
+      user: role === 'parent' ? { ...specificUser, linkedStudents } : specificUser,
+      role,
+      tenantId,
+      linkedStudents,
+      branding,
+      features,
+    };
+  }
+
+  async registerGoogleUser(token: string, role: string, phone: string): Promise<any> {
+    const ticket = await this.googleClient.verifyIdToken({
+      idToken: token,
+      audience: this.configService.get<string>('GOOGLE_CLIENT_ID'),
+    });
+    const payload = ticket.getPayload();
+    if (!payload || !payload.email) throw new UnauthorizedException('Invalid Google Token');
+    
+    const tenantId = this.configService.get<string>('DEFAULT_TENANT_ID') || DEFAULT_TENANT_ID;
+    const companyName = await this.erpAdapter.getInstituteCompany(tenantId);
+    
+    const parts = (payload.name || '').split(' ');
+    const firstName = parts[0] || 'User';
+    const lastName = parts.slice(1).join(' ') || '';
+
+    try {
+      await this.erpAdapter.createUser({
+         email: payload.email,
+         first_name: firstName,
+         last_name: lastName,
+         send_welcome_email: 0,
+         custom_approval_status: 'Pending'
+      });
+    } catch (e) {
+      this.logger.error('Failed to create Frappe User', e);
+      // Might already exist
+    }
+
+    try {
+      if (role === 'student') {
+         await this.erpAdapter.createStudent({
+           first_name: firstName,
+           last_name: lastName,
+           student_email_id: payload.email,
+           student_mobile_number: phone,
+           company: companyName
+         });
+      } else if (role === 'instructor' || role === 'admin') {
+         await this.erpAdapter.createInstructor({
+           instructor_name: payload.name || 'User',
+           email_address: payload.email,
+           cell_number: phone,
+           company: companyName
+         });
+      } else if (role === 'parent') {
+         await this.erpAdapter.createDoc('Guardian', {
+           guardian_name: payload.name || 'User',
+           email_address: payload.email,
+           mobile_number: phone
+         });
+      }
+    } catch (e) {
+      this.logger.error('Failed to create specific role document', e);
+    }
+
+    return { message: 'Account created. Under approval from admin.' };
   }
 }

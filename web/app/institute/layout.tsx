@@ -2,6 +2,7 @@
 
 import { ReactNode } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname, useRouter } from "next/navigation"
 import {
   Bell,
@@ -73,9 +74,8 @@ export default function InstituteLayout({ children }: { children: ReactNode }) {
       {/* Mobile Header */}
       <div className="md:hidden flex items-center justify-between p-4 bg-institute-bg-surface border-b border-institute-border">
         <div className="flex items-center space-x-2">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           {branding?.logoUrl ? (
-            <img src={branding.logoUrl} alt="Logo" className="w-8 h-8 rounded" />
+            <Image src={branding.logoUrl} alt="Logo" width={32} height={32} className="w-8 h-8 rounded" />
           ) : (
             <div className="w-8 h-8 bg-primary rounded flex items-center justify-center text-primary-foreground font-bold">
               {branding?.instituteName?.[0] || 'I'}
@@ -91,9 +91,8 @@ export default function InstituteLayout({ children }: { children: ReactNode }) {
       {/* Desktop Sidebar */}
       <div className="hidden md:flex flex-col w-64 bg-institute-bg-surface border-r border-institute-border sticky top-0 h-screen">
         <div className="p-6 border-b border-institute-border flex items-center space-x-3">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           {branding?.logoUrl ? (
-            <img src={branding.logoUrl} alt="Logo" className="w-10 h-10 rounded shadow-sm" />
+            <Image src={branding.logoUrl} alt="Logo" width={40} height={40} className="w-10 h-10 rounded shadow-sm" />
           ) : (
             <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-primary-foreground font-bold text-lg shadow-glow">
               {branding?.instituteName?.[0] || 'I'}

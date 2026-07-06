@@ -4,7 +4,7 @@ import { ReactNode } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import {
-  LayoutDashboard, Building2, Activity, LogOut, Menu,
+  LayoutDashboard, Building2, Activity, LogOut,
   ScrollText, Network, BarChart3, Shield, ToggleLeft,
 } from "lucide-react"
 import { AuthGuard } from "@/components/auth/auth-guard"

@@ -1,8 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Pressable, Alert } from 'react-native';
-import { useQuery } from '@tanstack/react-query';
-import { getPendingFees } from '@/lib/api';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { getPendingFees, getRazorpayConfig, verifyRazorpayPayment } from '@/lib/api';
 import { useAuthStore } from '@/lib/auth-store';
+
+import RazorpayCheckout from 'react-native-razorpay';
 
 export default function StudentFeesScreen() {
   const { erpId } = useAuthStore();
@@ -13,17 +15,59 @@ export default function StudentFeesScreen() {
     enabled: !!erpId,
   });
 
+  const { data: config } = useQuery({
+    queryKey: ['razorpayConfig'],
+    queryFn: () => getRazorpayConfig(),
+  });
+
+  const verifyMutation = useMutation({
+    mutationFn: verifyRazorpayPayment,
+    onSuccess: (data: any) => {
+      Alert.alert('Success', `Payment verified successfully!\nPayment ID: ${data.razorpay_payment_id}`);
+    },
+    onError: (error: any) => {
+      Alert.alert('Verification Failed', `Error: ${error.message || 'Payment could not be verified'}`);
+    },
+  });
+
   const fees = (res as any)?.data || [];
   const pendingTotal = fees.reduce((sum: number, fee: any) => sum + (fee.amount || 0), 0);
 
+  const openRazorpay = (amount: number, description: string) => {
+    const razorpayKey = (config as any)?.key || 'rzp_test_mock_key';
+    
+    const options = {
+      description,
+      image: 'https://coachingos.example.com/logo.png',
+      currency: 'INR',
+      key: razorpayKey,
+      amount: amount * 100,
+      name: 'CoachingOS Institute',
+      prefill: {
+        email: 'student@example.com',
+        contact: '9123456789',
+        name: erpId || 'Student'
+      },
+      theme: { color: '#6366F1' }
+    };
+    
+    RazorpayCheckout.open(options).then((data: any) => {
+      verifyMutation.mutate({
+        razorpay_payment_id: data.razorpay_payment_id,
+        razorpay_order_id: data.razorpay_order_id,
+        razorpay_signature: data.razorpay_signature,
+      });
+    }).catch((error: any) => {
+      Alert.alert('Payment Failed', `Error: ${error.description || error.message || 'Cancelled'}`);
+    });
+  };
+
   const handlePay = (fee: any) => {
-    // In a real app, this would open Razorpay SDK
-    // RazorpayCheckout.open(options)
-    Alert.alert('Payment Initialization', `Initializing Razorpay for ₹${fee.amount}\nFee ID: ${fee.id}`);
+    openRazorpay(fee.amount, `Payment for Fee ID: ${fee.id}`);
   };
 
   const handlePayAll = () => {
-    Alert.alert('Payment Initialization', `Initializing Razorpay for Total: ₹${pendingTotal}`);
+    openRazorpay(pendingTotal, 'Full Pending Amount Payment');
   };
 
   if (isLoading) {

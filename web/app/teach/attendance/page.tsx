@@ -77,11 +77,11 @@ export default function TeachAttendancePage() {
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight text-slate-900 mb-2">Manual Attendance</h2>
-        <p className="text-slate-500">Mark attendance for students via the gateway API.</p>
+        <h2 className="text-3xl font-bold tracking-tight text-[var(--inst-text-primary)] mb-2">Manual Attendance</h2>
+        <p className="text-[var(--inst-muted)]">Mark attendance for students via the gateway API.</p>
       </div>
 
-      <Card className="border-slate-200 shadow-sm">
+      <Card className="border-[var(--inst-border)] shadow-sm">
         <CardContent className="p-4 sm:p-6 flex flex-col sm:flex-row gap-4">
           {batches && batches.length > 0 && (
             <Select value={batchId} onValueChange={setSelectedBatch}>
@@ -101,7 +101,7 @@ export default function TeachAttendancePage() {
             </Select>
           )}
           <div className="relative flex-1">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-[var(--inst-muted)]" />
             <Input
               placeholder="Search student..."
               className="pl-9"
@@ -112,7 +112,7 @@ export default function TeachAttendancePage() {
           <Button
             onClick={handleSave}
             disabled={markAttendance.isPending}
-            className="bg-blue-600 hover:bg-blue-700 text-white shrink-0"
+            className="bg-[hsl(var(--inst-primary))] hover:bg-[hsl(var(--inst-primary))] text-white shrink-0"
           >
             <Save className="mr-2 h-4 w-4" />
             {markAttendance.isPending ? 'Saving...' : 'Submit'}
@@ -128,19 +128,19 @@ export default function TeachAttendancePage() {
             const id = student.name
             const status = attendanceState[id]
             return (
-              <Card key={id} className="border-slate-200">
+              <Card key={id} className="border-[var(--inst-border)]">
                 <CardContent className="p-4 flex items-center justify-between">
                   <div>
-                    <h4 className="font-semibold text-slate-900">
+                    <h4 className="font-semibold text-[var(--inst-text-primary)]">
                       {student.first_name} {student.last_name ?? ''}
                     </h4>
-                    <p className="text-xs font-mono text-slate-500">{id}</p>
+                    <p className="text-xs font-mono text-[var(--inst-muted)]">{id}</p>
                   </div>
                   <div className="flex space-x-2">
                     <Button
                       size="sm"
                       variant={status === 'Present' ? 'default' : 'outline'}
-                      className={status === 'Present' ? 'bg-green-600 hover:bg-green-700' : ''}
+                      className={status === 'Present' ? 'bg-[var(--inst-success)] hover:bg-[var(--inst-success)]' : ''}
                       onClick={() => toggleAttendance(id, 'Present')}
                     >
                       <CheckCircle2 className="w-4 h-4" />

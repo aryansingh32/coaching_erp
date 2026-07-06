@@ -1,15 +1,18 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
-import { Video, Play, Square } from "lucide-react"
+import { Video, Play, Square, Calendar, Archive, Users } from "lucide-react"
 import { useBatches, useCreateLiveClass, useLiveClasses, useEndLiveClass } from "@/lib/api/hooks"
+import { useLiveClassSocket } from "@/lib/api/socket"
 import { FeatureGate } from "@/components/shared/feature-gate"
 import { LoadingState } from "@/components/shared/loading-state"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "sonner"
+import { MeetingRecordings } from "./_components/meeting-recordings"
 
 export default function TeachLiveClassPage() {
   const { data: batches, isLoading } = useBatches()
@@ -18,6 +21,15 @@ export default function TeachLiveClassPage() {
   const endLive = useEndLiveClass()
   const [selectedBatch, setSelectedBatch] = useState("")
   const [className, setClassName] = useState("")
+  
+  // Real-time Socket presence
+  const { activeClasses: socketClasses } = useLiveClassSocket()
+  
+  // Merge REST and Socket active classes
+  const activeMeetings = [
+    ...(meetings || []),
+    ...socketClasses.filter(sc => !meetings?.find(m => m.meetingId === sc.meetingId))
+  ]
 
   const handleStart = async () => {
     if (!selectedBatch) {
@@ -49,78 +61,147 @@ export default function TeachLiveClassPage() {
 
   return (
     <FeatureGate feature="live_classes">
-      <div className="space-y-6">
+      <div className="space-y-6 animate-in fade-in duration-300">
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
-            <Video className="w-6 h-6" /> Live Classes
+            <Video className="w-6 h-6 text-inst-primary" /> Live Class Manager
           </h2>
-          <p className="text-muted-foreground">Start or join BigBlueButton sessions for your batches.</p>
+          <p className="text-muted-foreground">Manage BigBlueButton sessions, monitor active classes, and access recordings.</p>
         </div>
 
-        <Card>
-          <CardHeader><CardTitle>Start a new class</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-            {isLoading ? (
-              <LoadingState />
-            ) : (
-              <>
-                <select
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  value={selectedBatch}
-                  onChange={(e) => setSelectedBatch(e.target.value)}
-                >
-                  <option value="">Select batch</option>
-                  {(batches ?? []).map((b) => {
-                    const id = b.name || b.id || ''
-                    const label = b.student_group_name || b.name || id
-                    return <option key={id} value={id}>{label}</option>
-                  })}
-                </select>
-                <Input
-                  placeholder="Class title (optional)"
-                  value={className}
-                  onChange={(e) => setClassName(e.target.value)}
-                />
-                <Button onClick={handleStart} disabled={createLive.isPending}>
-                  <Play className="w-4 h-4 mr-2" /> Start class
-                </Button>
-              </>
-            )}
-          </CardContent>
-        </Card>
+        <Tabs defaultValue="start" className="space-y-6">
+          <TabsList className="bg-muted/50 p-1">
+            <TabsTrigger value="start" className="data-[state=active]:bg-background">
+              Start Class
+            </TabsTrigger>
+            <TabsTrigger value="active" className="data-[state=active]:bg-background">
+              Active Sessions
+              {activeMeetings.length > 0 && (
+                <span className="ml-2 bg-inst-primary text-white text-[10px] px-1.5 py-0.5 rounded-full animate-pulse">
+                  {activeMeetings.length}
+                </span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="recordings" className="data-[state=active]:bg-background">
+              Recording Library
+            </TabsTrigger>
+          </TabsList>
 
-        <Card>
-          <CardHeader><CardTitle>Active classes</CardTitle></CardHeader>
-          <CardContent>
-            {!meetings?.length ? (
-              <p className="text-sm text-muted-foreground">No active classes.</p>
-            ) : (
-              <ul className="space-y-3">
-                {meetings.map((m) => (
-                  <li key={m.meetingId} className="flex items-center justify-between p-3 rounded-lg bg-slate-100">
-                    <div>
-                      <p className="font-medium">{m.name}</p>
-                      <p className="text-xs text-muted-foreground font-mono">{m.meetingId}</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button size="sm" asChild>
-                        <Link href={`/learn/live-class/${m.meetingId}`}>Join</Link>
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => handleEnd(m.meetingId)}
-                        disabled={endLive.isPending}
+          <TabsContent value="start" className="space-y-6">
+            <Card className="border-inst-border shadow-sm max-w-2xl">
+              <CardHeader>
+                <CardTitle>Launch Instant Class</CardTitle>
+                <CardDescription>Select a batch to start an instant BigBlueButton session.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {isLoading ? (
+                  <LoadingState />
+                ) : (
+                  <>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Target Batch</label>
+                      <select
+                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-inst-primary"
+                        value={selectedBatch}
+                        onChange={(e) => setSelectedBatch(e.target.value)}
                       >
-                        <Square className="w-3 h-3 mr-1" /> End
-                      </Button>
+                        <option value="">Select a batch...</option>
+                        {(batches ?? []).map((b) => {
+                          const id = b.name || b.id || ''
+                          const label = b.student_group_name || b.name || id
+                          return <option key={id} value={id}>{label}</option>
+                        })}
+                      </select>
                     </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Topic (Optional)</label>
+                      <Input
+                        placeholder="e.g., Chapter 5 Revision"
+                        value={className}
+                        onChange={(e) => setClassName(e.target.value)}
+                      />
+                    </div>
+                    <Button onClick={handleStart} disabled={createLive.isPending} className="w-full sm:w-auto">
+                      <Play className="w-4 h-4 mr-2 fill-current" /> Launch Class
+                    </Button>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="active">
+            <Card className="border-inst-border shadow-sm">
+              <CardHeader>
+                <CardTitle>Currently Active Classes</CardTitle>
+                <CardDescription>Live sessions currently running across your batches.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {!activeMeetings?.length ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground border-2 border-dashed rounded-lg">
+                    <Video className="w-12 h-12 mb-4 opacity-20" />
+                    <p>No active classes running right now.</p>
+                  </div>
+                ) : (
+                  <ul className="grid gap-4 sm:grid-cols-2">
+                    {activeMeetings.map((m) => (
+                      <li key={m.meetingId} className="flex flex-col justify-between p-4 rounded-xl border bg-card hover:border-inst-primary/50 transition-colors shadow-sm">
+                        <div className="mb-4">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                            <p className="font-semibold text-lg leading-tight">{m.name}</p>
+                          </div>
+                          <p className="text-xs text-muted-foreground font-mono bg-muted inline-flex px-1.5 py-0.5 rounded">ID: {m.meetingId}</p>
+                        </div>
+                        <div className="flex gap-3">
+                          <Button size="sm" asChild className="flex-1 bg-inst-primary hover:bg-inst-primary/90 text-white">
+                            <Link href={`/learn/live-class/${m.meetingId}`}>
+                              <Users className="w-4 h-4 mr-2" /> Join
+                            </Link>
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            className="flex-1"
+                            onClick={() => handleEnd(m.meetingId)}
+                            disabled={endLive.isPending}
+                          >
+                            <Square className="w-3 h-3 mr-2 fill-current" /> End
+                          </Button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="recordings">
+            <Card className="border-inst-border shadow-sm">
+              <CardHeader>
+                <CardTitle>Recording Library</CardTitle>
+                <CardDescription>Access and manage past BigBlueButton session recordings.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="p-4 bg-blue-50 text-blue-800 rounded-lg text-sm border border-blue-100 flex gap-3">
+                    <Archive className="w-5 h-5 shrink-0" />
+                    <p>Select a past meeting ID below to load its recordings. Only published recordings will be visible to students.</p>
+                  </div>
+                  
+                  {/* Mock meeting ID list, ideally this would be a historical list from backend */}
+                  <div className="grid gap-6 md:grid-cols-2">
+                    <div className="space-y-2 border-r pr-4">
+                      <h4 className="font-medium text-sm">Past Meetings</h4>
+                      <MeetingRecordings meetingId="example-meeting-1" />
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </FeatureGate>
   )

@@ -9,6 +9,7 @@ import { TenantScopeModule } from '../../shared/tenant/tenant-scope.module';
 import { FeaturesModule } from '../../shared/feature-flags/features.module';
 import { RfidCard } from '../../shared/entities/rfid-card.entity';
 import { RfidWebhookGuard } from './guards/rfid-webhook.guard';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { RfidWebhookGuard } from './guards/rfid-webhook.guard';
     AuthModule,
     TenantScopeModule,
     FeaturesModule,
+    NotificationsModule,
     TypeOrmModule.forFeature([RfidCard]),
   ],
   controllers: [AttendanceController],

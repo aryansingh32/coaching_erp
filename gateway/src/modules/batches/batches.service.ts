@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
+import { DomainEventBus } from '../../shared/events/domain-event-bus';
 import { EducationAdapter } from '../../adapters/erpnext/education.adapter';
 import { CreateBatchDto, EnrollStudentDto, ScheduleBatchDto } from './dto/batch.dto';
 import { TenantScopeService } from '../../shared/tenant/tenant-scope.service';
@@ -10,7 +10,7 @@ export class BatchesService {
 
   constructor(
     private readonly erpAdapter: EducationAdapter,
-    private readonly eventEmitter: EventEmitter2,
+    private readonly eventBus: DomainEventBus,
     private readonly tenantScope: TenantScopeService,
   ) {}
 
@@ -44,7 +44,7 @@ export class BatchesService {
     await this.tenantScope.assertBatchBelongsToTenant(batchId, tenantId);
     await this.tenantScope.assertStudentBelongsToTenant(dto.studentId, tenantId);
     const result = await this.erpAdapter.enrollStudentInBatch(dto.studentId, batchId);
-    this.eventEmitter.emit('student.enrolled', { studentId: dto.studentId, batchId });
+    await this.eventBus.publish('student.enrolled', { studentId: dto.studentId, batchId }, tenantId);
     return result;
   }
 

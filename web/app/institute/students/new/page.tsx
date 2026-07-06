@@ -2,10 +2,14 @@
 
 import { useRouter } from "next/navigation"
 import { useCreateStudent } from "@/lib/api/hooks"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { FormSection, FormFieldGroup } from "@/components/ui/form-section"
 import { toast } from "sonner"
+import { ArrowLeft, Save } from "lucide-react"
 
 export default function NewStudentPage() {
   const router = useRouter()
@@ -30,45 +34,100 @@ export default function NewStudentPage() {
   }
 
   return (
-    <div className="max-w-xl space-y-6">
-      <div>
-        <h3 className="text-2xl font-bold tracking-tight">Add Student</h3>
-        <p className="text-muted-foreground">Creates a new Student record via POST /students</p>
+    <div className="max-w-4xl mx-auto space-y-6 pb-12 animate-in fade-in duration-300">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => router.back()}>
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">New Student</h1>
+            <p className="text-muted-foreground text-sm">Create a new student record</p>
+          </div>
+        </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Student Details</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">First Name *</label>
-              <Input name="first_name" required />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Last Name</label>
-              <Input name="last_name" />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Email</label>
-              <Input name="email" type="email" />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Phone</label>
-              <Input name="phone" type="tel" />
-            </div>
-            <div className="flex gap-2">
-              <Button type="button" variant="outline" onClick={() => router.back()}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={createStudent.isPending}>
-                {createStudent.isPending ? 'Creating...' : 'Create Student'}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+      <form id="student-form" onSubmit={handleSubmit}>
+        <Card className="shadow-sm">
+          <CardContent className="p-0 sm:p-6">
+            <FormSection 
+              title="Personal Details" 
+              description="Basic information about the student."
+            >
+              <FormFieldGroup>
+                <div>
+                  <Label htmlFor="first_name">First Name <span className="text-destructive">*</span></Label>
+                  <Input id="first_name" name="first_name" required className="mt-1" />
+                </div>
+                <div>
+                  <Label htmlFor="last_name">Last Name</Label>
+                  <Input id="last_name" name="last_name" className="mt-1" />
+                </div>
+              </FormFieldGroup>
+
+              <FormFieldGroup>
+                <div>
+                  <Label htmlFor="gender">Gender</Label>
+                  <Select name="gender">
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select gender" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Male">Male</SelectItem>
+                      <SelectItem value="Female">Female</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="blood_group">Blood Group</Label>
+                  <Select name="blood_group">
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select blood group" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="A+">A+</SelectItem>
+                      <SelectItem value="A-">A-</SelectItem>
+                      <SelectItem value="B+">B+</SelectItem>
+                      <SelectItem value="B-">B-</SelectItem>
+                      <SelectItem value="O+">O+</SelectItem>
+                      <SelectItem value="O-">O-</SelectItem>
+                      <SelectItem value="AB+">AB+</SelectItem>
+                      <SelectItem value="AB-">AB-</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </FormFieldGroup>
+            </FormSection>
+
+            <FormSection 
+              title="Contact Information" 
+              description="How the institute will contact the student."
+            >
+              <FormFieldGroup>
+                <div>
+                  <Label htmlFor="email">Email Address</Label>
+                  <Input id="email" name="email" type="email" placeholder="student@example.com" className="mt-1" />
+                </div>
+                <div>
+                  <Label htmlFor="phone">Mobile Number</Label>
+                  <Input id="phone" name="phone" type="tel" placeholder="+1234567890" className="mt-1" />
+                </div>
+              </FormFieldGroup>
+            </FormSection>
+          </CardContent>
+        </Card>
+
+        <div className="flex justify-end gap-3 mt-6">
+          <Button type="button" variant="outline" onClick={() => router.back()}>
+            Discard
+          </Button>
+          <Button type="submit" disabled={createStudent.isPending} className="gap-2">
+            <Save className="w-4 h-4" />
+            {createStudent.isPending ? 'Saving...' : 'Save Student'}
+          </Button>
+        </div>
+      </form>
     </div>
   )
 }

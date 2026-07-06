@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
+import { DomainEventBus } from '../../shared/events/domain-event-bus';
 import { EducationAdapter } from '../../adapters/erpnext/education.adapter';
 import { CreateStudentDto, UpdateStudentDto } from './dto/student.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -13,7 +13,7 @@ export class StudentsService {
 
   constructor(
     private readonly erpAdapter: EducationAdapter,
-    private readonly eventEmitter: EventEmitter2,
+    private readonly eventBus: DomainEventBus,
     private readonly tenantScope: TenantScopeService,
     @InjectRepository(RfidCard)
     private readonly rfidCardRepo: Repository<RfidCard>,
@@ -30,7 +30,7 @@ export class StudentsService {
     };
     const student = await this.erpAdapter.createStudent(studentData, dto.guardian);
 
-    this.eventEmitter.emit('student.created', student);
+    await this.eventBus.publish('student.created', student, tenantId);
     return student;
   }
 

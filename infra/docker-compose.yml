@@ -187,8 +187,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
-    ports:
-      - "8080:3000"   # Gateway REST API — accessible at http://localhost:8080/api/v1
     deploy:
       resources:
         limits:
@@ -215,8 +213,6 @@ services:
     depends_on:
       gateway:
         condition: service_healthy
-    ports:
-      - "3001:3001"   # Next.js web — accessible at http://localhost:3001
     networks: [coaching_network]
     restart: unless-stopped
     deploy:
@@ -241,8 +237,6 @@ services:
       -m 8222
     volumes:
       - nats_data:/data
-    ports:
-      - "8222:8222"   # Monitoring UI — internal only, do NOT expose via Nginx
     networks: [coaching_network]
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:8222/healthz"]
@@ -498,8 +492,6 @@ services:
         condition: service_healthy
     networks: [coaching_network]
     restart: unless-stopped
-    ports:
-      - "8000:8000"   # ERPNext desk — http://localhost:8000 after erpnext-setup.sh
     deploy:
       resources:
         limits:
@@ -598,6 +590,11 @@ services:
       - ./clickhouse-config.xml:/etc/clickhouse-server/config.d/limits.xml
     networks: [coaching_network]
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8123/ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     ulimits:
       nofile:
         soft: 262144
@@ -636,6 +633,8 @@ services:
       - ./metabase-plugins:/plugins   # ClickHouse driver JAR goes here
     depends_on:
       postgres:
+        condition: service_healthy
+      clickhouse:
         condition: service_healthy
     networks: [coaching_network]
     restart: unless-stopped
